@@ -21,6 +21,7 @@ const DOCILE_URANIUM_COLOR = [147, 161, 161];
 const NEUTRON_COLOR = [0, 43, 54];
 const URANIUM_SPAWN_CHANCE_ON_INIT = 0.1;
 const NEUTRON_SPAWN_CHANCE_PER_FRAME = 0.0002;
+const URANIUM_SPAWN_CHANCE_PER_FRAME = 0.0001;
 const k = kaplay({
     background: BACKGROUND_COLOR
 });
@@ -28,8 +29,6 @@ const k = kaplay({
 
 k.loadRoot("./"); 
 k.loadSprite("crab", "sprites/crab.png");
-
-k.onClick(() => k.addKaboom(k.mousePos()));
 
 function getRndVector({ min_angle, max_angle } = { min_angle: 0, max_angle: 2*Math.PI }) {
     const angle = Math.random() * (max_angle - min_angle) + min_angle;
@@ -171,6 +170,13 @@ k.scene("main", () => {
     k.onUpdate("docile", (docile) => {
         if (Math.random() < NEUTRON_SPAWN_CHANCE_PER_FRAME) {
             spawnNeutron( { pos: docile.pos, dir: getRndVector()} );
+        }
+    });
+
+    k.onUpdate("docile", (docile) => {
+        if (Math.random() < URANIUM_SPAWN_CHANCE_PER_FRAME) {
+            spawnUranium({ pos: docile.pos });
+            docile.destroy();
         }
     });
 
