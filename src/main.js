@@ -17,8 +17,8 @@ k.loadSprite("crab", "sprites/crab.png");
 
 k.onClick(() => k.addKaboom(k.mousePos()));
 
-function getRndVector() {
-    const angle = Math.random() * Math.PI * 2;
+function getRndVector({ min_angle, max_angle } = { min_angle: 0, max_angle: 2*Math.PI }) {
+    const angle = Math.random() * (max_angle - min_angle) + min_angle;
     return k.vec2(
         Math.cos(angle),
         Math.sin(angle) 
@@ -118,17 +118,14 @@ k.scene("main", () => {
     })
 
     k.onUpdate("neutron", (neutron) => {
-        neutron.move(neutron.dir.scale(100));
+        neutron.move(neutron.dir.scale(300));
     });
 
     k.onCollide("neutron", "uranium", (neutron, uranium, collision) => {
-        for (let i = 0; i < 3; i++) {
-            k.debug.log("Spawn neutron");
+        // Spawn two neutrons with fully random directions
+        for (let i = 0; i < 2; i++) {
             k.add([
-                k.pos(
-                    uranium.pos.x,
-                    uranium.pos.y
-                ),
+                k.pos(uranium.pos),
                 k.circle(NEUTRON_RADIUS),
                 k.area(),
                 k.color(0, 0, 0),
@@ -136,6 +133,30 @@ k.scene("main", () => {
                 "neutron"
             ]);
         }
+
+        // Spawn a single neutron with a direction based on the original
+        const angle = Math.atan2(neutron.dir.y, neutron.dir.x);
+        k.add([
+            k.pos(uranium.pos),
+            k.circle(NEUTRON_RADIUS),
+            k.area(),
+            k.color(0, 0, 0),
+            { 
+                dir: getRndVector({
+                    min_angle: angle - Math.PI / 12,
+                    max_angle: angle + Math.PI / 12
+                }) 
+            },
+            "neutron"
+        ]);
+
+        k.add([
+            k.pos(uranium.pos),
+            k.circle(URANIUM_RADIUS),
+            k.area(),
+            k.color(128, 128, 128),
+            "docile"
+        ]);
 
         neutron.destroy();
         uranium.destroy();
