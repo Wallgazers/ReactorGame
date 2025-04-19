@@ -8,7 +8,8 @@ const MAP_HEIGHT = 512;
 const MAP_WALL = 24;
 const BOUNDS_OFFSET = 128;
 const NEUTRON_RADIUS = 12;
-const URANIUM_RADIUS = 24;
+const URANIUM_RADIUS = 18;
+const URANIUM_SPACING = 64
 
 const k = kaplay();
 
@@ -25,6 +26,37 @@ function getRndVector({ min_angle, max_angle } = { min_angle: 0, max_angle: 2*Ma
     );
 }
 
+function spawnNeutron({ pos, dir }) {
+    k.add([
+        k.pos(pos.x, pos.y),
+        k.circle(NEUTRON_RADIUS),
+        k.area(),
+        k.color(0, 0, 0),
+        { dir: k.vec2(dir.x, dir.y) },
+        "neutron"
+    ]);
+}
+
+function spawnUranium({ pos }) {
+    k.add([
+        k.pos(pos.x, pos.y),
+        k.circle(URANIUM_RADIUS),
+        k.area(),
+        k.color(0, 0, 255),
+        "uranium"
+    ]);
+}
+
+function spawnUraniumGrid() {
+    const uranium = [];
+    for (let i = BOUNDS_OFFSET + URANIUM_SPACING + MAP_WALL; i < MAP_WIDTH + BOUNDS_OFFSET; i += URANIUM_SPACING) {
+        for (let j = BOUNDS_OFFSET + URANIUM_SPACING + MAP_WALL; j < MAP_HEIGHT + BOUNDS_OFFSET; j += URANIUM_SPACING) {
+            spawnUranium({ pos: { x: i, y: j } });
+        }
+    }
+    return uranium;
+}
+
 k.scene("main", () => {
 
     const player = k.add([
@@ -34,6 +66,14 @@ k.scene("main", () => {
         k.body(),
         { dir: k.vec2(0, 0) },
     ]);
+
+    spawnNeutron({ 
+        pos: {
+            x: BOUNDS_OFFSET,
+            y: MAP_HEIGHT/2
+        }, 
+        dir: getRndVector()
+    });
 
     // add left wall
     add([
@@ -75,30 +115,7 @@ k.scene("main", () => {
         k.color(0, 0, 0)
     ]);
 
-    let neutron = k.add([
-        k.pos(0, 50),
-        // k.pos(
-        //     getRndInteger(0, window.screen.width), 
-        //     getRndInteger(0, window.screen.height)
-        // ),
-        k.circle(NEUTRON_RADIUS),
-        k.area(),
-        k.color(0, 0, 0),
-        { dir: k.vec2(1, 0) },
-        // { dir: k.vec2(
-        //     getRndInteger(-1, 1), 
-        //     getRndInteger(-1, 1)) 
-        // },
-        "neutron"
-    ]);
-
-    let uranium = k.add([
-        k.pos(300, 50),
-        k.circle(URANIUM_RADIUS),
-        k.area(),
-        k.color(0, 0, 255),
-        "uranium"
-    ]);
+    spawnUraniumGrid();
 
     function move_player() {
         let dir = k.vec2(0, 0);
@@ -124,31 +141,27 @@ k.scene("main", () => {
     k.onCollide("neutron", "uranium", (neutron, uranium, collision) => {
         // Spawn two neutrons with fully random directions
         for (let i = 0; i < 2; i++) {
-            k.add([
-                k.pos(uranium.pos),
-                k.circle(NEUTRON_RADIUS),
-                k.area(),
-                k.color(0, 0, 0),
-                { dir: getRndVector() },
-                "neutron"
-            ]);
+            spawnNeutron({
+                pos: {
+                    x: uranium.pos.x,
+                    y: uranium.pos.y
+                },
+                dir: getRndVector()
+            })
         }
 
         // Spawn a single neutron with a direction based on the original
         const angle = Math.atan2(neutron.dir.y, neutron.dir.x);
-        k.add([
-            k.pos(uranium.pos),
-            k.circle(NEUTRON_RADIUS),
-            k.area(),
-            k.color(0, 0, 0),
-            { 
-                dir: getRndVector({
-                    min_angle: angle - Math.PI / 12,
-                    max_angle: angle + Math.PI / 12
-                }) 
+        spawnNeutron({
+            pos: {
+                x: uranium.pos.x,
+                y: uranium.pos.y
             },
-            "neutron"
-        ]);
+            dir: getRndVector({
+                min_angle: angle - Math.PI / 12,
+                max_angle: angle + Math.PI / 12
+            }) 
+        })
 
         k.add([
             k.pos(uranium.pos),
