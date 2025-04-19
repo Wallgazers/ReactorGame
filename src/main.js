@@ -7,6 +7,8 @@ const MAP_WIDTH = 512;
 const MAP_HEIGHT = 512;
 const MAP_WALL = 24;
 const BOUNDS_OFFSET = 128;
+const NEUTRON_RADIUS = 12;
+const URANIUM_RADIUS = 24;
 
 const k = kaplay();
 
@@ -14,6 +16,14 @@ k.loadRoot("./");
 k.loadSprite("crab", "sprites/crab.png");
 
 k.onClick(() => k.addKaboom(k.mousePos()));
+
+function getRndVector() {
+    const angle = Math.random() * Math.PI * 2;
+    return k.vec2(
+        Math.cos(angle),
+        Math.sin(angle) 
+    );
+}
 
 k.scene("main", () => {
 
@@ -65,6 +75,31 @@ k.scene("main", () => {
         k.color(0, 0, 0)
     ]);
 
+    let neutron = k.add([
+        k.pos(0, 50),
+        // k.pos(
+        //     getRndInteger(0, window.screen.width), 
+        //     getRndInteger(0, window.screen.height)
+        // ),
+        k.circle(NEUTRON_RADIUS),
+        k.area(),
+        k.color(0, 0, 0),
+        { dir: k.vec2(1, 0) },
+        // { dir: k.vec2(
+        //     getRndInteger(-1, 1), 
+        //     getRndInteger(-1, 1)) 
+        // },
+        "neutron"
+    ]);
+
+    let uranium = k.add([
+        k.pos(300, 50),
+        k.circle(URANIUM_RADIUS),
+        k.area(),
+        k.color(0, 0, 255),
+        "uranium"
+    ]);
+
     function move_player() {
         let dir = k.vec2(0, 0);
 
@@ -82,6 +117,29 @@ k.scene("main", () => {
         move_player();
     })
 
+    k.onUpdate("neutron", (neutron) => {
+        neutron.move(neutron.dir.scale(100));
+    });
+
+    k.onCollide("neutron", "uranium", (neutron, uranium, collision) => {
+        for (let i = 0; i < 3; i++) {
+            k.debug.log("Spawn neutron");
+            k.add([
+                k.pos(
+                    uranium.pos.x,
+                    uranium.pos.y
+                ),
+                k.circle(NEUTRON_RADIUS),
+                k.area(),
+                k.color(0, 0, 0),
+                { dir: getRndVector() },
+                "neutron"
+            ]);
+        }
+
+        neutron.destroy();
+        uranium.destroy();
+    });
 });
 
 k.go("main");
