@@ -7,11 +7,24 @@ const MAP_WIDTH = 512;
 const MAP_HEIGHT = 512;
 const MAP_WALL = 24;
 const BOUNDS_OFFSET = 128;
-const NEUTRON_RADIUS = 12;
+const NEUTRON_RADIUS = 8;
 const URANIUM_RADIUS = 18;
 const URANIUM_SPACING = 64
 
-const k = kaplay();
+const NEUTRON_Z = 10;
+const URANIUM_Z = 1;
+const DOCILE_URANIUM_Z = 1;
+
+const BACKGROUND_COLOR = [253, 246, 227];
+const URANIUM_COLOR = [38, 139, 210];
+const DOCILE_URANIUM_COLOR = [147, 161, 161];
+const NEUTRON_COLOR = [0, 43, 54];
+const URANIUM_SPAWN_CHANCE_ON_INIT = 0.1;
+const NEUTRON_SPAWN_CHANCE_PER_FRAME = 0.0002;
+const k = kaplay({
+    background: BACKGROUND_COLOR
+});
+
 
 k.loadRoot("./"); 
 k.loadSprite("crab", "sprites/crab.png");
@@ -31,7 +44,8 @@ function spawnNeutron({ pos, dir }) {
         k.pos(pos.x, pos.y),
         k.circle(NEUTRON_RADIUS),
         k.area(),
-        k.color(0, 0, 0),
+        k.color(NEUTRON_COLOR),
+        k.z(NEUTRON_Z),
         { dir: k.vec2(dir.x, dir.y) },
         "neutron"
     ]);
@@ -42,8 +56,20 @@ function spawnUranium({ pos }) {
         k.pos(pos.x, pos.y),
         k.circle(URANIUM_RADIUS),
         k.area(),
-        k.color(0, 0, 255),
+        k.color(URANIUM_COLOR),
+        k.z(URANIUM_Z),
         "uranium"
+    ]);
+}
+
+function spawnDocileUranium({ pos }) {
+    k.add([
+        k.pos(pos.x, pos.y),
+        k.circle(URANIUM_RADIUS),
+        k.area(),
+        k.color(DOCILE_URANIUM_COLOR),
+        k.z(DOCILE_URANIUM_Z),
+        "docile"
     ]);
 }
 
@@ -51,7 +77,11 @@ function spawnUraniumGrid() {
     const uranium = [];
     for (let i = BOUNDS_OFFSET + URANIUM_SPACING + MAP_WALL; i < MAP_WIDTH + BOUNDS_OFFSET; i += URANIUM_SPACING) {
         for (let j = BOUNDS_OFFSET + URANIUM_SPACING + MAP_WALL; j < MAP_HEIGHT + BOUNDS_OFFSET; j += URANIUM_SPACING) {
-            spawnUranium({ pos: { x: i, y: j } });
+            if (Math.random() < URANIUM_SPAWN_CHANCE_ON_INIT) {
+                spawnUranium({ pos: { x: i, y: j } });
+            } else {
+                spawnDocileUranium({ pos: { x: i, y: j }});
+            }
         }
     }
     return uranium;
@@ -138,6 +168,12 @@ k.scene("main", () => {
         neutron.move(neutron.dir.scale(300));
     });
 
+    k.onUpdate("docile", (docile) => {
+        if (Math.random() < NEUTRON_SPAWN_CHANCE_PER_FRAME) {
+            spawnNeutron( { pos: docile.pos, dir: getRndVector()} );
+        }
+    });
+
     k.onCollide("neutron", "uranium", (neutron, uranium, collision) => {
         // Spawn two neutrons with fully random directions
         for (let i = 0; i < 2; i++) {
@@ -163,13 +199,10 @@ k.scene("main", () => {
             }) 
         })
 
-        k.add([
-            k.pos(uranium.pos),
-            k.circle(URANIUM_RADIUS),
-            k.area(),
-            k.color(128, 128, 128),
-            "docile"
-        ]);
+        spawnDocileUranium({ pos: {
+            x: uranium.pos.x,
+            y: uranium.pos.y
+        }});
 
         neutron.destroy();
         uranium.destroy();
