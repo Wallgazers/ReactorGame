@@ -29,3 +29,5 @@ will build your game and package into a .zip file, you can upload to your server
 ## Attributions
 
 [Solarized Color Scheme](https://ethanschoonover.com/solarized/)
+[pop.mp3](https://jdwasabi.itch.io/8-bit-16-bit-sound-effects-pack)
+[yuri.png](https://limezu.itch.io/moderninteriors)
