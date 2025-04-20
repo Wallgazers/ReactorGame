@@ -26,14 +26,17 @@ const MAP_WALL_WIDTH_IN_PX = 24;
 const PLAYER_Z = 12;
 const CONTROL_ROD_Z = 11;
 const NEUTRON_Z = 10;
-const URANIUM_Z = 1;
-const DOCILE_URANIUM_Z = 1;
+const URANIUM_Z = 2;
+const DOCILE_URANIUM_Z = 2;
+const WATER_Z = 1;
 
 const BACKGROUND_COLOR = [253, 246, 227];
 const URANIUM_COLOR = [38, 139, 210];
 const DOCILE_URANIUM_COLOR = [147, 161, 161];
 const NEUTRON_COLOR = [0, 43, 54];
 const CONTROL_ROD_COLOR = [0, 43, 54];
+const COOL_WATER_COLOR = [173, 216, 230];
+const HOT_WATER_COLOR = [220, 50, 47];
 const CONTROL_ROD_SPACING_IN_COLS = 4;  // In units of uranium atoms
 const URANIUM_SPAWN_CHANCE_ON_INIT = 0.1;
 const NEUTRON_SPAWN_CHANCE_PER_FRAME = 0.0002;
@@ -99,6 +102,18 @@ function spawnDocileUranium({ pos }) {
     ]);
 }
 
+function spawnWaterCell({ pos }) {
+    return k.add([
+        k.pos(pos.x, pos.y),
+        k.rect(URANIUM_SPACING_IN_PX, URANIUM_SPACING_IN_PX),
+        k.color(COOL_WATER_COLOR),
+        k.z(WATER_Z),
+        k.anchor("center"),
+        { temp: 0 },
+        "water"
+    ]);
+}
+
 function spawnControlRod({ pos }) {
     k.add([
         k.pos(pos.x, pos.y),
@@ -111,6 +126,8 @@ function spawnControlRod({ pos }) {
         "control_rod"
     ]);
 };
+
+let water = create2DArray(MAP_SIZE_IN_COLS, MAP_SIZE_IN_ROWS, null);
 
 function spawnReactor() {
     // add left wall
@@ -179,6 +196,8 @@ function spawnReactor() {
             } else {
                 spawnDocileUranium({ pos: { x: BOUNDS_OFFSET_IN_PX + (i * URANIUM_SPACING_IN_PX), y: BOUNDS_OFFSET_IN_PX + (j * URANIUM_SPACING_IN_PX) } });
             }
+            let waterCell = spawnWaterCell({ pos: { x: BOUNDS_OFFSET_IN_PX + (i * URANIUM_SPACING_IN_PX), y: BOUNDS_OFFSET_IN_PX + (j * URANIUM_SPACING_IN_PX) } });
+            water[i][j] = waterCell;
         }
     }
 }
@@ -190,8 +209,6 @@ function create2DArray(rows, cols, initialValue) {
 }
 
 k.scene("main", () => {
-    let water = create2DArray(MAP_SIZE_IN_COLS, MAP_SIZE_IN_ROWS, 0);
-
     const player = k.add([
         k.sprite("yuri"),
         k.pos(BOUNDS_OFFSET_IN_PX, MAP_HEIGHT_IN_PX / 2),
@@ -250,12 +267,12 @@ k.scene("main", () => {
     })
 
     k.onUpdate("neutron", (neutron) => {
-        let x = Math.floor((neutron.pos.x - BOUNDS_OFFSET_IN_PX) / URANIUM_SPACING_IN_PX);
-        let y = Math.floor((neutron.pos.y - BOUNDS_OFFSET_IN_PX) / URANIUM_SPACING_IN_PX);
-        if (Math.random() < NEUTRON_ABSORB_CHANCE_PER_FRAME && water[x][y] < 1.0) {
-            water[x][y] += 0.5;
+        let x = Math.min(Math.max(Math.floor((neutron.pos.x - (BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX)) / URANIUM_SPACING_IN_PX), 0), MAP_SIZE_IN_COLS - 1);
+        let y = Math.min(Math.max(Math.floor((neutron.pos.y - (BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX)) / URANIUM_SPACING_IN_PX), 0), MAP_SIZE_IN_ROWS - 1);
+        if (Math.random() < NEUTRON_ABSORB_CHANCE_PER_FRAME && water[x][y].temp < 1.0) {
+            water[x][y].temp += 0.1;
             neutron.destroy();
-            k.debug.log(`absorbed at ${x}, ${y}`);
+            k.debug.log(`absorbed at ${x}, ${y}, water[${x}][${y}].temp = ${water[x][y].temp}`);
         }
 
         neutron.move(neutron.dir.scale(300));
@@ -341,42 +358,54 @@ k.scene("main", () => {
         }
     });
 
-    k.onDraw(() => {
-        drawRect({
-            width: 120,
-            height: 240,
-            pos: vec2(20, 20),
-            color: YELLOW,
-            outline: { color: BLACK, width: 4 },
-        });
-
-        for (let i = 0; i < MAP_SIZE_IN_COLS; i++) {
-            for (let j = 0; j < MAP_SIZE_IN_ROWS; j++) {
-                const value = water[i][j];
-                if (value > 1.0) continue;
-
-                const x = BOUNDS_OFFSET_IN_PX + (i * URANIUM_SPACING_IN_PX);
-                const y = BOUNDS_OFFSET_IN_PX + (j * URANIUM_SPACING_IN_PX);
-                const width = URANIUM_SPACING_IN_PX;
-                const height = URANIUM_SPACING_IN_PX;
-
-                // Interpolate between light blue (low) and light red (high)
-                const r = Math.floor(value); // 173 to 255
-                const g = Math.floor(value);         // 216 to 0
-                const b = Math.floor(value);         // 230 to 0
-                // const a = 0.4 * (1.0 - value); // Transparent near 1, more visible near 0
-
-                k.drawRect({
-                    pos: k.vec2(x, y),
-                    width,
-                    height,
-                    color: k.color(r, g, b),
-                    anchor: "center",
-                    outline: { color: RED, width: 1 },
-                });
-            }
+    k.onUpdate("water", (water) => {
+        if (water.temp >= 1) {
+            water.color = k.WHITE;
+        } else {
+            const hue = (1 - Math.min(water.temp, 1)) * 195; // 240 = blue, 0 = red
+            const saturation = 0.53;
+            const lightness = 0.79;
+            
+            water.color = k.Color.fromHSL(hue / 360, saturation, lightness);
         }
     });
+
+    // k.onDraw(() => {
+    //     drawRect({
+    //         width: 120,
+    //         height: 240,
+    //         pos: vec2(20, 20),
+    //         color: YELLOW,
+    //         outline: { color: BLACK, width: 4 },
+    //     });
+
+    //     for (let i = 0; i < MAP_SIZE_IN_COLS; i++) {
+    //         for (let j = 0; j < MAP_SIZE_IN_ROWS; j++) {
+    //             const value = water[i][j];
+    //             if (value > 1.0) continue;
+
+    //             const x = BOUNDS_OFFSET_IN_PX + (i * URANIUM_SPACING_IN_PX);
+    //             const y = BOUNDS_OFFSET_IN_PX + (j * URANIUM_SPACING_IN_PX);
+    //             const width = URANIUM_SPACING_IN_PX;
+    //             const height = URANIUM_SPACING_IN_PX;
+
+    //             // Interpolate between light blue (low) and light red (high)
+    //             const r = Math.floor(value); // 173 to 255
+    //             const g = Math.floor(value);         // 216 to 0
+    //             const b = Math.floor(value);         // 230 to 0
+    //             // const a = 0.4 * (1.0 - value); // Transparent near 1, more visible near 0
+
+    //             k.drawRect({
+    //                 pos: k.vec2(x, y),
+    //                 width,
+    //                 height,
+    //                 color: k.color(r, g, b),
+    //                 anchor: "center",
+    //                 outline: { color: RED, width: 1 },
+    //             });
+    //         }
+    //     }
+    // });
 });
 
 k.go("main");
