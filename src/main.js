@@ -37,6 +37,7 @@ const CONTROL_ROD_COLOR = [0, 43, 54];
 const CONTROL_ROD_SPACING_IN_COLS = 4;  // In units of uranium atoms
 const URANIUM_SPAWN_CHANCE_ON_INIT = 0.1;
 const NEUTRON_SPAWN_CHANCE_PER_FRAME = 0.0002;
+const NEUTRON_ABSORB_CHANCE_PER_FRAME = 0.01;
 const URANIUM_SPAWN_CHANCE_PER_FRAME = 0.0001;
 const k = kaplay({
     background: BACKGROUND_COLOR
@@ -182,7 +183,14 @@ function spawnReactor() {
     }
 }
 
+function create2DArray(rows, cols, initialValue) {
+    return Array.from({ length: rows }, () =>
+        Array.from({ length: cols }, () => initialValue)
+    );
+}
+
 k.scene("main", () => {
+    let water = create2DArray(MAP_SIZE_IN_COLS, MAP_SIZE_IN_ROWS, 0);
 
     const player = k.add([
         k.sprite("yuri"),
@@ -242,6 +250,14 @@ k.scene("main", () => {
     })
 
     k.onUpdate("neutron", (neutron) => {
+        let x = Math.floor((neutron.pos.x - BOUNDS_OFFSET_IN_PX) / URANIUM_SPACING_IN_PX);
+        let y = Math.floor((neutron.pos.y - BOUNDS_OFFSET_IN_PX) / URANIUM_SPACING_IN_PX);
+        if (Math.random() < NEUTRON_ABSORB_CHANCE_PER_FRAME && water[x][y] < 1.0) {
+            water[x][y] += 0.5;
+            neutron.destroy();
+            k.debug.log(`absorbed at ${x}, ${y}`);
+        }
+
         neutron.move(neutron.dir.scale(300));
     });
 
@@ -322,6 +338,43 @@ k.scene("main", () => {
             );
 
             player.controlRodContactStartPos = player.pos;
+        }
+    });
+
+    k.onDraw(() => {
+        drawRect({
+            width: 120,
+            height: 240,
+            pos: vec2(20, 20),
+            color: YELLOW,
+            outline: { color: BLACK, width: 4 },
+        });
+
+        for (let i = 0; i < MAP_SIZE_IN_COLS; i++) {
+            for (let j = 0; j < MAP_SIZE_IN_ROWS; j++) {
+                const value = water[i][j];
+                if (value > 1.0) continue;
+
+                const x = BOUNDS_OFFSET_IN_PX + (i * URANIUM_SPACING_IN_PX);
+                const y = BOUNDS_OFFSET_IN_PX + (j * URANIUM_SPACING_IN_PX);
+                const width = URANIUM_SPACING_IN_PX;
+                const height = URANIUM_SPACING_IN_PX;
+
+                // Interpolate between light blue (low) and light red (high)
+                const r = Math.floor(value); // 173 to 255
+                const g = Math.floor(value);         // 216 to 0
+                const b = Math.floor(value);         // 230 to 0
+                // const a = 0.4 * (1.0 - value); // Transparent near 1, more visible near 0
+
+                k.drawRect({
+                    pos: k.vec2(x, y),
+                    width,
+                    height,
+                    color: k.color(r, g, b),
+                    anchor: "center",
+                    outline: { color: RED, width: 1 },
+                });
+            }
         }
     });
 });
