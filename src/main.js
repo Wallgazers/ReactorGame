@@ -34,6 +34,7 @@ const BACKGROUND_COLOR = [253, 246, 227];
 const URANIUM_COLOR = [38, 139, 210];
 const DOCILE_URANIUM_COLOR = [147, 161, 161];
 const NEUTRON_COLOR = [0, 43, 54];
+const FAST_NEUTRON_COLOR = [255, 255, 255];
 const CONTROL_ROD_COLOR = [0, 43, 54];
 const XENON_COLOR = CONTROL_ROD_COLOR;
 const COOL_WATER_COLOR = [173, 216, 230];
@@ -83,8 +84,23 @@ function spawnNeutron({ pos, dir }) {
         k.area(),
         k.color(NEUTRON_COLOR),
         k.z(NEUTRON_Z),
+        k.offscreen({ destroy: true }),
         { dir: k.vec2(dir.x, dir.y) },
         "neutron"
+    ]);
+}
+
+function spawnFastNeutron({ pos, dir }) {
+    k.add([
+        k.pos(pos.x, pos.y),
+        k.circle(NEUTRON_RADIUS_IN_PX),
+        k.area(),
+        k.color(FAST_NEUTRON_COLOR),
+        k.outline({ width: 3, color: k.BLACK }),
+        k.z(NEUTRON_Z),
+        k.offscreen({ destroy: true }),
+        { dir: k.vec2(dir.x, dir.y) },
+        "fastNeutron"
     ]);
 }
 
@@ -147,6 +163,18 @@ function spawnControlRod({ pos }) {
         "controlRod"
     ]);
 };
+
+function spawnModerator({ pos, height_px }) {
+    k.add([
+        k.pos(pos.x, pos.y),
+        k.rect(CONTROL_ROD_WIDTH_IN_PX, height_px), 
+        k.area(),
+        k.body({ isStatic: true }),
+        k.anchor("top"),
+        k.z(CONTROL_ROD_Z),
+        k.outline({ width: 4, color: k.YELLOW }),
+    ]);
+}
 
 let water = create2DArray(MAP_SIZE_IN_COLS, MAP_SIZE_IN_ROWS, null);
 
@@ -312,6 +340,10 @@ k.scene("main", () => {
         neutron.move(neutron.dir.scale(300));
     });
 
+    k.onUpdate("fastNeutron", (fastNeutron) => {
+        fastNeutron.move(fastNeutron.dir.scale(600));
+    });
+
     k.onUpdate("docile", (docile) => {
         if (Math.random() < NEUTRON_SPAWN_CHANCE_PER_FRAME) {
             spawnNeutron({ pos: docile.pos, dir: getRndVector() });
@@ -336,7 +368,7 @@ k.scene("main", () => {
     k.onCollide("neutron", "uranium", (neutron, uranium, collision) => {
         // Spawn two neutrons with fully random directions
         for (let i = 0; i < 2; i++) {
-            spawnNeutron({
+            spawnFastNeutron({
                 pos: {
                     x: uranium.pos.x,
                     y: uranium.pos.y
@@ -347,7 +379,7 @@ k.scene("main", () => {
 
         // Spawn a single neutron with a direction based on the original
         const angle = Math.atan2(neutron.dir.y, neutron.dir.x);
-        spawnNeutron({
+        spawnFastNeutron({
             pos: {
                 x: uranium.pos.x,
                 y: uranium.pos.y
@@ -378,6 +410,21 @@ k.scene("main", () => {
         uranium.destroy();
 
         k.play("pop", { volume: 0.2 });
+    });
+
+    k.onCollide("fastNeutron", "moderator", (fastNeutron, moderator, col) => {
+        fastNeutron.destroy();
+
+        spawnNeutron({
+            pos: {
+                x: fastNeutron.pos.x,
+                y: fastNeutron.pos.y
+            },
+            dir: getRndVector({
+                min_angle: angle - Math.PI / 12,
+                max_angle: angle + Math.PI / 12
+            })
+        })
     });
 
     k.onUpdate("xenon", (xenon) => {
