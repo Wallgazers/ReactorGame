@@ -42,6 +42,7 @@ const URANIUM_SPAWN_CHANCE_ON_INIT = 0.1;
 const NEUTRON_SPAWN_CHANCE_PER_FRAME = 0.0002;
 const NEUTRON_ABSORB_CHANCE_PER_FRAME = 0.01;
 const URANIUM_SPAWN_CHANCE_PER_FRAME = 0.0001;
+const WATER_COOLING_RATE_PER_SECOND = 0.025;
 const k = kaplay({
     background: BACKGROUND_COLOR
 });
@@ -272,7 +273,7 @@ k.scene("main", () => {
         if (Math.random() < NEUTRON_ABSORB_CHANCE_PER_FRAME && water[x][y].temp < 1.0) {
             water[x][y].temp += 0.1;
             neutron.destroy();
-            k.debug.log(`absorbed at ${x}, ${y}, water[${x}][${y}].temp = ${water[x][y].temp}`);
+            // k.debug.log(`absorbed at ${x}, ${y}, water[${x}][${y}].temp = ${water[x][y].temp}`);
         }
 
         neutron.move(neutron.dir.scale(300));
@@ -359,6 +360,8 @@ k.scene("main", () => {
     });
 
     k.onUpdate("water", (water) => {
+        water.temp = Math.max(water.temp - WATER_COOLING_RATE_PER_SECOND * k.dt(), 0);
+
         if (water.temp >= 1) {
             water.color = k.WHITE;
         } else {
@@ -368,44 +371,8 @@ k.scene("main", () => {
             
             water.color = k.Color.fromHSL(hue / 360, saturation, lightness);
         }
+
     });
-
-    // k.onDraw(() => {
-    //     drawRect({
-    //         width: 120,
-    //         height: 240,
-    //         pos: vec2(20, 20),
-    //         color: YELLOW,
-    //         outline: { color: BLACK, width: 4 },
-    //     });
-
-    //     for (let i = 0; i < MAP_SIZE_IN_COLS; i++) {
-    //         for (let j = 0; j < MAP_SIZE_IN_ROWS; j++) {
-    //             const value = water[i][j];
-    //             if (value > 1.0) continue;
-
-    //             const x = BOUNDS_OFFSET_IN_PX + (i * URANIUM_SPACING_IN_PX);
-    //             const y = BOUNDS_OFFSET_IN_PX + (j * URANIUM_SPACING_IN_PX);
-    //             const width = URANIUM_SPACING_IN_PX;
-    //             const height = URANIUM_SPACING_IN_PX;
-
-    //             // Interpolate between light blue (low) and light red (high)
-    //             const r = Math.floor(value); // 173 to 255
-    //             const g = Math.floor(value);         // 216 to 0
-    //             const b = Math.floor(value);         // 230 to 0
-    //             // const a = 0.4 * (1.0 - value); // Transparent near 1, more visible near 0
-
-    //             k.drawRect({
-    //                 pos: k.vec2(x, y),
-    //                 width,
-    //                 height,
-    //                 color: k.color(r, g, b),
-    //                 anchor: "center",
-    //                 outline: { color: RED, width: 1 },
-    //             });
-    //         }
-    //     }
-    // });
 });
 
 k.go("main");
