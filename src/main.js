@@ -36,13 +36,13 @@ const DOCILE_URANIUM_COLOR = [147, 161, 161];
 const NEUTRON_COLOR = [0, 43, 54];
 const CONTROL_ROD_COLOR = [0, 43, 54];
 const COOL_WATER_COLOR = [173, 216, 230];
-const HOT_WATER_COLOR = [220, 50, 47];
+const HOT_WATER_COLOR = [255, 105, 97];
 const CONTROL_ROD_SPACING_IN_COLS = 4;  // In units of uranium atoms
 const URANIUM_SPAWN_CHANCE_ON_INIT = 0.1;
 const NEUTRON_SPAWN_CHANCE_PER_FRAME = 0.0003;
 const NEUTRON_ABSORB_CHANCE_PER_FRAME = 0.01;
-const URANIUM_SPAWN_CHANCE_PER_FRAME = 0.0002;
-const WATER_COOLING_RATE_PER_SECOND = 0.025;
+const URANIUM_SPAWN_CHANCE_PER_FRAME = 0.0003;
+const WATER_COOLING_RATE_PER_SECOND = 0.0125;
 const k = kaplay({
     background: BACKGROUND_COLOR
 });
@@ -128,7 +128,8 @@ function spawnControlRod({ pos }) {
         k.color(CONTROL_ROD_COLOR),
         k.anchor("top"),
         k.z(CONTROL_ROD_Z),
-        "control_rod"
+        k.outline({ width: 0, color: k.YELLOW }),
+        "controlRod"
     ]);
 };
 
@@ -245,21 +246,21 @@ k.scene("main", () => {
 
     function move_player() {
         let dir = k.vec2(0, 0);
-    
+
         if (k.isKeyDown("a")) dir.x -= 1;
         if (k.isKeyDown("d")) dir.x += 1;
         if (k.isKeyDown("w")) dir.y -= 1;
         if (k.isKeyDown("s")) dir.y += 1;
-    
+
         dir = dir.unit();
         player.move(dir.scale(PLAYER_SPEED));
-    
+
         let newAnim = null;
-    
+
         if (dir.x !== 0 || dir.y !== 0) {
             // Save last non-zero movement direction
             player.dir = dir;
-    
+
             if (Math.abs(dir.x) > Math.abs(dir.y)) {
                 newAnim = dir.x > 0 ? "walkRight" : "walkLeft";
             } else {
@@ -273,7 +274,7 @@ k.scene("main", () => {
                 newAnim = player.dir.y > 0 ? "idleDown" : "idleUp";
             }
         }
-    
+
         if (player.currentAnim !== newAnim) {
             player.play(newAnim);
             player.currentAnim = newAnim;
@@ -309,7 +310,7 @@ k.scene("main", () => {
         }
     });
 
-    k.onCollide("neutron", "control_rod", (neutron) => {
+    k.onCollide("neutron", "controlRod", (neutron) => {
         neutron.destroy();
     });
 
@@ -355,12 +356,12 @@ k.scene("main", () => {
         k.play("pop", { volume: 0.2 });
     });
 
-    k.onCollide("player", "control_rod", (player, controlRod, collision) => {
+    k.onCollide("player", "controlRod", (player, controlRod, collision) => {
         player.controlRodContactStartPos = player.pos;
         // k.debug.log(player.controlRodContactStartPos.y);
     });
 
-    k.onCollideUpdate("player", "control_rod", (player, controlRod, collision) => {
+    k.onCollideUpdate("player", "controlRod", (player, controlRod, collision) => {
         if (k.isKeyDown("space")) {
             const ceiling = BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX + MAP_WALL_WIDTH_IN_PX;
 
@@ -373,22 +374,36 @@ k.scene("main", () => {
             );
 
             player.controlRodContactStartPos = player.pos;
+            controlRod.outline.width = 4;
+            controlRod.outline.color = k.YELLOW;
         }
     });
 
     k.onUpdate("water", (water) => {
+        // // Water cooling
         water.temp = Math.max(water.temp - WATER_COOLING_RATE_PER_SECOND * k.dt(), 0);
 
         if (water.temp >= 1) {
             water.color = k.WHITE;
         } else {
-            const hue = (1 - Math.min(water.temp, 1)) * 195; // 240 = blue, 0 = red
-            const saturation = 0.53;
-            const lightness = 0.79;
-            
-            water.color = k.Color.fromHSL(hue / 360, saturation, lightness);
+            water.color = k.lerp(
+                new k.Color(173, 216, 230),
+                new k.Color(255, 105, 97),
+                water.temp
+            );
         }
 
+    });
+
+    k.onUpdate(() => {
+        const touchingRod = k.get("controlRod").some(rod => player.isColliding(rod));
+
+        if (!k.isKeyDown("space") || !touchingRod) {
+            k.get("controlRod").forEach(rod => {
+                rod.outline.width = 0;
+                rod.outline.color = k.BLACK;
+            });
+        }
     });
 });
 
