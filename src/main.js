@@ -58,6 +58,10 @@ k.loadSprite("yuri", "sprites/yuri.png", {
         idleUp: { from: 62, to: 67, loop: true },
         idleLeft: { from: 68, to: 73, loop: true },
         idleDown: { from: 74, to: 79, loop: true },
+        walkRight: { from: 112, to: 117, loop: true },
+        walkUp: { from: 118, to: 123, loop: true },
+        walkLeft: { from: 124, to: 129, loop: true },
+        walkDown: { from: 130, to: 135, loop: true },
     },
 });
 k.loadSound("pop", "sounds/pop.mp3");
@@ -218,10 +222,11 @@ k.scene("main", () => {
         k.z(PLAYER_Z),
         { dir: k.vec2(0, 0) },
         { controlRodContactStartPos: k.vec2(0, 0) },
+        { currentAnim: null },
         "player"
     ]);
 
-    player.play("idleDown");
+    player.play("walkRight");
 
     spawnReactor();
 
@@ -240,27 +245,39 @@ k.scene("main", () => {
 
     function move_player() {
         let dir = k.vec2(0, 0);
-
-        if (k.isKeyDown("a")) {
-            dir.x -= 1;
-            player.play("idleLeft");
-        }
-        if (k.isKeyDown("d")) {
-            dir.x += 1;
-            player.play("idleRight");
-        }
-        if (k.isKeyDown("w")) {
-            dir.y -= 1;
-            player.play("idleUp");
-        }
-        if (k.isKeyDown("s")) {
-            dir.y += 1;
-            player.play("idleDown");
-        }
-
+    
+        if (k.isKeyDown("a")) dir.x -= 1;
+        if (k.isKeyDown("d")) dir.x += 1;
+        if (k.isKeyDown("w")) dir.y -= 1;
+        if (k.isKeyDown("s")) dir.y += 1;
+    
         dir = dir.unit();
-        player.dir = dir;
-        player.move(player.dir.scale(PLAYER_SPEED));
+        player.move(dir.scale(PLAYER_SPEED));
+    
+        let newAnim = null;
+    
+        if (dir.x !== 0 || dir.y !== 0) {
+            // Save last non-zero movement direction
+            player.dir = dir;
+    
+            if (Math.abs(dir.x) > Math.abs(dir.y)) {
+                newAnim = dir.x > 0 ? "walkRight" : "walkLeft";
+            } else {
+                newAnim = dir.y > 0 ? "walkDown" : "walkUp";
+            }
+        } else {
+            // Standing still, use last movement direction
+            if (Math.abs(player.dir.x) > Math.abs(player.dir.y)) {
+                newAnim = player.dir.x > 0 ? "idleRight" : "idleLeft";
+            } else {
+                newAnim = player.dir.y > 0 ? "idleDown" : "idleUp";
+            }
+        }
+    
+        if (player.currentAnim !== newAnim) {
+            player.play(newAnim);
+            player.currentAnim = newAnim;
+        }
     }
 
     k.onUpdate(() => {
