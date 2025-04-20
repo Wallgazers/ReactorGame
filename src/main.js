@@ -35,11 +35,13 @@ const URANIUM_COLOR = [38, 139, 210];
 const DOCILE_URANIUM_COLOR = [147, 161, 161];
 const NEUTRON_COLOR = [0, 43, 54];
 const CONTROL_ROD_COLOR = [0, 43, 54];
+const XENON_COLOR = CONTROL_ROD_COLOR;
 const COOL_WATER_COLOR = [173, 216, 230];
 const HOT_WATER_COLOR = [255, 105, 97];
 const CONTROL_ROD_SPACING_IN_COLS = 4;  // In units of uranium atoms
 const URANIUM_SPAWN_CHANCE_ON_INIT = 0.1;
 const NEUTRON_SPAWN_CHANCE_PER_FRAME = 0.0003;
+const XENON_SPAWN_CHANCE_ON_IMPACT = 0.01;
 const NEUTRON_ABSORB_CHANCE_PER_FRAME = 0.01;
 const URANIUM_SPAWN_CHANCE_PER_FRAME = 0.0003;
 const WATER_COOLING_RATE_PER_SECOND = 0.0125;
@@ -104,6 +106,19 @@ function spawnDocileUranium({ pos }) {
         k.color(DOCILE_URANIUM_COLOR),
         k.z(DOCILE_URANIUM_Z),
         "docile"
+    ]);
+}
+
+function spawnXenon({ pos }) {
+    k.debug.log("spawnXenon");
+    k.add([
+        k.pos(pos.x, pos.y),
+        k.circle(URANIUM_RADIUS_IN_PX),
+        k.color(XENON_COLOR),
+        k.area(),
+        k.z(DOCILE_URANIUM_Z),
+        { collisionCountdown: 0.1 },
+        "xenon"
     ]);
 }
 
@@ -343,17 +358,45 @@ k.scene("main", () => {
             })
         })
 
-        spawnDocileUranium({
-            pos: {
-                x: uranium.pos.x,
-                y: uranium.pos.y
-            }
-        });
+        if (Math.random() < XENON_SPAWN_CHANCE_ON_IMPACT) {
+            spawnXenon({
+                pos: {
+                    x: uranium.pos.x,
+                    y: uranium.pos.y
+                }
+            });
+        } else {
+            spawnDocileUranium({
+                pos: {
+                    x: uranium.pos.x,
+                    y: uranium.pos.y
+                }
+            });
+        }
 
         neutron.destroy();
         uranium.destroy();
 
         k.play("pop", { volume: 0.2 });
+    });
+
+    k.onUpdate("xenon", (xenon) => {
+        xenon.collisionCountdown -= 1 * k.dt();
+        xenon.collisionCountdown = Math.max(0, xenon.collisionCountdown);
+    });
+
+    k.onCollide("neutron", "xenon", (neutron, xenon) => {
+        if (xenon.collisionCountdown <= 0) {
+            k.debug.log("burnt off xenon");
+            spawnDocileUranium({
+                pos: {
+                    x: xenon.pos.x,
+                    y: xenon.pos.y
+                }
+            });
+            xenon.destroy();
+            neutron.destroy();
+        }
     });
 
     k.onCollide("player", "controlRod", (player, controlRod, collision) => {
