@@ -133,7 +133,7 @@ function spawnXenon({ pos }) {
         k.color(XENON_COLOR),
         k.area(),
         k.z(DOCILE_URANIUM_Z),
-        { collisionCountdown: 0.1 },
+        { collisionCountdown: 0.25 },
         "xenon"
     ]);
 }
@@ -150,8 +150,22 @@ function spawnWaterCell({ pos }) {
     ]);
 }
 
+function spawnModerator({ pos, height_px }) {
+    return k.add([
+        k.pos(pos.x, pos.y),
+        k.rect(CONTROL_ROD_WIDTH_IN_PX, height_px), 
+        k.area({ collisionIgnore: ["player"] }),
+        k.body({ isStatic: true }),
+        k.anchor("top"),
+        k.z(CONTROL_ROD_Z),
+        k.color(108, 113, 196),
+        k.outline({ width: 4, color: k.YELLOW }),
+        "moderator"
+    ]);
+}
+
 function spawnControlRod({ pos }) {
-    k.add([
+    return k.add([
         k.pos(pos.x, pos.y),
         k.rect(CONTROL_ROD_WIDTH_IN_PX, MAP_HEIGHT_IN_PX),
         k.area(),
@@ -160,21 +174,10 @@ function spawnControlRod({ pos }) {
         k.anchor("top"),
         k.z(CONTROL_ROD_Z),
         k.outline({ width: 0, color: k.YELLOW }),
+        spawnModerator({ pos, height_px: 200 }),
         "controlRod"
     ]);
 };
-
-function spawnModerator({ pos, height_px }) {
-    k.add([
-        k.pos(pos.x, pos.y),
-        k.rect(CONTROL_ROD_WIDTH_IN_PX, height_px), 
-        k.area(),
-        k.body({ isStatic: true }),
-        k.anchor("top"),
-        k.z(CONTROL_ROD_Z),
-        k.outline({ width: 4, color: k.YELLOW }),
-    ]);
-}
 
 let water = create2DArray(MAP_SIZE_IN_COLS, MAP_SIZE_IN_ROWS, null);
 
@@ -238,6 +241,7 @@ function spawnReactor() {
     for (let i = 0; i < MAP_SIZE_IN_COLS; i += 1) {
         if ((i + 3) % CONTROL_ROD_SPACING_IN_COLS == 0) {
             spawnControlRod({ pos: { x: BOUNDS_OFFSET_IN_PX + (i * URANIUM_SPACING_IN_PX) + (URANIUM_SPACING_IN_PX / 2), y: BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX + MAP_WALL_WIDTH_IN_PX } });
+            spawnModerator({ pos: { x: BOUNDS_OFFSET_IN_PX + ((i-2) * URANIUM_SPACING_IN_PX) + (URANIUM_SPACING_IN_PX / 2), y: BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX + MAP_WALL_WIDTH_IN_PX }, height_px: MAP_HEIGHT_IN_PX });
         };
         for (let j = 0; j < MAP_SIZE_IN_ROWS; j += 1) {
             if (Math.random() < URANIUM_SPAWN_CHANCE_ON_INIT) {
@@ -249,6 +253,9 @@ function spawnReactor() {
             water[i][j] = waterCell;
         }
     }
+
+
+    spawnModerator({ pos: { x: BOUNDS_OFFSET_IN_PX + ((MAP_SIZE_IN_COLS - 1) * URANIUM_SPACING_IN_PX) + (URANIUM_SPACING_IN_PX / 2), y: BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX + MAP_WALL_WIDTH_IN_PX }, height_px: MAP_HEIGHT_IN_PX });
 }
 
 function create2DArray(rows, cols, initialValue) {
@@ -341,7 +348,7 @@ k.scene("main", () => {
     });
 
     k.onUpdate("fastNeutron", (fastNeutron) => {
-        fastNeutron.move(fastNeutron.dir.scale(600));
+        fastNeutron.move(fastNeutron.dir.scale(450));
     });
 
     k.onUpdate("docile", (docile) => {
@@ -420,10 +427,7 @@ k.scene("main", () => {
                 x: fastNeutron.pos.x,
                 y: fastNeutron.pos.y
             },
-            dir: getRndVector({
-                min_angle: angle - Math.PI / 12,
-                max_angle: angle + Math.PI / 12
-            })
+            dir: fastNeutron.dir.reflect(col.normal)
         })
     });
 
