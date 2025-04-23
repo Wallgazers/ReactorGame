@@ -1,6 +1,7 @@
 import kaplay from "kaplay";
 
 const PLAYER_SPEED = 480;
+const ROD_SPEED = 24;
 
 const WINDOW_WIDTH_IN_PX = window.screen.width;
 const WINDOW_HEIGHT_IN_PX = window.screen.height;
@@ -42,10 +43,10 @@ const HOT_WATER_COLOR = [255, 105, 97];
 const CONTROL_ROD_SPACING_IN_COLS = 4;  // In units of uranium atoms
 const URANIUM_SPAWN_CHANCE_ON_INIT = 0.1;
 const NEUTRON_SPAWN_CHANCE_PER_FRAME = 0.0003;
-const XENON_SPAWN_CHANCE_ON_IMPACT = 0.01;
+const XENON_SPAWN_CHANCE_ON_IMPACT = 0.5;
 const NEUTRON_ABSORB_CHANCE_PER_FRAME = 0.01;
-const URANIUM_SPAWN_CHANCE_PER_FRAME = 0.0003;
-const WATER_COOLING_RATE_PER_SECOND = 0.0125;
+const URANIUM_SPAWN_CHANCE_PER_FRAME = 0.0006;
+const WATER_COOLING_RATE_PER_SECOND = 0.006;
 const k = kaplay({
     background: BACKGROUND_COLOR
 });
@@ -159,13 +160,16 @@ function spawnModerator({ pos, height_px }) {
         k.anchor("top"),
         k.z(CONTROL_ROD_Z),
         k.color(108, 113, 196),
-        k.outline({ width: 4, color: k.YELLOW }),
+        //k.outline({ width: 4, color: k.YELLOW }),
         "moderator"
     ]);
 }
 
 function spawnControlRod({ pos }) {
-    return k.add([
+    const mod_pos = k.vec2(pos.x, pos.y + MAP_HEIGHT_IN_PX);
+    const moderator = spawnModerator({ pos: mod_pos, height_px: 200 });
+
+    const rod = k.add([
         k.pos(pos.x, pos.y),
         k.rect(CONTROL_ROD_WIDTH_IN_PX, MAP_HEIGHT_IN_PX),
         k.area(),
@@ -174,10 +178,17 @@ function spawnControlRod({ pos }) {
         k.anchor("top"),
         k.z(CONTROL_ROD_Z),
         k.outline({ width: 0, color: k.YELLOW }),
-        spawnModerator({ pos, height_px: 200 }),
+        {
+            update() {
+                moderator.pos = k.vec2(this.pos.x, this.pos.y + MAP_HEIGHT_IN_PX);
+            },
+            moderatorRef: moderator,
+        },
         "controlRod"
     ]);
-};
+
+    return rod;
+}
 
 let water = create2DArray(MAP_SIZE_IN_COLS, MAP_SIZE_IN_ROWS, null);
 
@@ -453,6 +464,17 @@ k.scene("main", () => {
     k.onCollide("player", "controlRod", (player, controlRod, collision) => {
         player.controlRodContactStartPos = player.pos;
         // k.debug.log(player.controlRodContactStartPos.y);
+    });
+
+    k.onUpdate("controlRod", (controlRod) => {
+        let dir = k.vec2(0, 0);
+
+        if (k.isKeyDown("e")) dir.y = -1;
+        if (k.isKeyDown("q")) dir.y = 1;
+        controlRod.move(dir.scale(ROD_SPEED));
+
+        let final_y = Math.min(Math.max(-1*MAP_HEIGHT_IN_PX + URANIUM_SPACING_IN_PX, controlRod.pos.y), BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX + MAP_WALL_WIDTH_IN_PX)
+        controlRod.pos.y = final_y
     });
 
     k.onCollideUpdate("player", "controlRod", (player, controlRod, collision) => {
