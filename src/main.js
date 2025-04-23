@@ -42,11 +42,12 @@ const COOL_WATER_COLOR = [173, 216, 230];
 const HOT_WATER_COLOR = [255, 105, 97];
 const CONTROL_ROD_SPACING_IN_COLS = 4;  // In units of uranium atoms
 const URANIUM_SPAWN_CHANCE_ON_INIT = 0.1;
-const NEUTRON_SPAWN_CHANCE_PER_FRAME = 0.0003;
-const XENON_SPAWN_CHANCE_ON_IMPACT = 0.5;
-const NEUTRON_ABSORB_CHANCE_PER_FRAME = 0.01;
-const URANIUM_SPAWN_CHANCE_PER_FRAME = 0.0006;
-const WATER_COOLING_RATE_PER_SECOND = 0.006;
+const NEUTRON_SPAWN_CHANCE_PER_FRAME = 0.0012;
+const XENON_SPAWN_CHANCE_ON_IMPACT = 0.75;
+const NEUTRON_ABSORB_CHANCE_PER_FRAME = 0.05;
+const URANIUM_SPAWN_CHANCE_PER_FRAME = 0.0024;
+const WATER_COOLING_RATE_PER_SECOND = 0.012;
+const NEUTRON_HEAT_ADDITION = 0.25;
 const k = kaplay({
     background: BACKGROUND_COLOR
 });
@@ -127,7 +128,7 @@ function spawnDocileUranium({ pos }) {
 }
 
 function spawnXenon({ pos }) {
-    k.debug.log("spawnXenon");
+    //k.debug.log("spawnXenon");
     k.add([
         k.pos(pos.x, pos.y),
         k.circle(URANIUM_RADIUS_IN_PX),
@@ -350,7 +351,7 @@ k.scene("main", () => {
         let x = Math.min(Math.max(Math.floor((neutron.pos.x - (BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX)) / URANIUM_SPACING_IN_PX), 0), MAP_SIZE_IN_COLS - 1);
         let y = Math.min(Math.max(Math.floor((neutron.pos.y - (BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX)) / URANIUM_SPACING_IN_PX), 0), MAP_SIZE_IN_ROWS - 1);
         if (Math.random() < NEUTRON_ABSORB_CHANCE_PER_FRAME && water[x][y].temp < 1.0) {
-            water[x][y].temp += 0.1;
+            water[x][y].temp += NEUTRON_HEAT_ADDITION;
             neutron.destroy();
             // k.debug.log(`absorbed at ${x}, ${y}, water[${x}][${y}].temp = ${water[x][y].temp}`);
         }
@@ -449,7 +450,7 @@ k.scene("main", () => {
 
     k.onCollide("neutron", "xenon", (neutron, xenon) => {
         if (xenon.collisionCountdown <= 0) {
-            k.debug.log("burnt off xenon");
+            //k.debug.log("burnt off xenon");
             spawnDocileUranium({
                 pos: {
                     x: xenon.pos.x,
