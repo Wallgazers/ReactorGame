@@ -69,7 +69,7 @@ k.loadSprite("yuri", "sprites/yuri.png", {
         walkDown: { from: 130, to: 135, loop: true },
     },
 });
-k.loadSound("pop", "sounds/pop.mp3");
+k.loadSound("pop", "sounds/sharp-pop.mp3");
 
 function getRndVector({ min_angle, max_angle } = { min_angle: 0, max_angle: 2 * Math.PI }) {
     const angle = Math.random() * (max_angle - min_angle) + min_angle;
