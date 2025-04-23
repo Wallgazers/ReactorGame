@@ -8,7 +8,7 @@ const WINDOW_HEIGHT_IN_PX = window.screen.height;
 
 // TODO: later map size should scale with a difficulty slider
 const MAP_SIZE_IN_COLS = 24;
-const MAP_SIZE_IN_ROWS = MAP_SIZE_IN_COLS / 2;
+const MAP_SIZE_IN_ROWS = 12;
 const NEUTRON_RADIUS_IN_PX = 8;
 //const URANIUM_RADIUS_IN_PX = 18;
 //const URANIUM_SPACING_IN_PX = 64;
@@ -16,7 +16,7 @@ const CONTROL_ROD_WIDTH_IN_PX = 16;
 
 
 
-const URANIUM_SPACING_IN_PX = WINDOW_WIDTH_IN_PX / (MAP_SIZE_IN_COLS + 2.5);
+const URANIUM_SPACING_IN_PX = Math.floor(0.85 * WINDOW_HEIGHT_IN_PX / (MAP_SIZE_IN_ROWS + 2.5));
 const URANIUM_RADIUS_IN_PX = 0.25 * URANIUM_SPACING_IN_PX
 const BOUNDS_OFFSET_IN_PX = 1.5 * URANIUM_SPACING_IN_PX;
 
@@ -292,6 +292,8 @@ k.scene("main", () => {
     player.play("walkRight");
 
     spawnReactor();
+    k.debug.log(`Width: ${WINDOW_WIDTH_IN_PX}`);
+    k.debug.log(`Height: ${WINDOW_HEIGHT_IN_PX}`);
 
     // TODO: Record a history of the count to render to a line chart?
     const neutronCounter = k.add([
