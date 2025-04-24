@@ -42,12 +42,14 @@ const COOL_WATER_COLOR = [173, 216, 230];
 const HOT_WATER_COLOR = [255, 105, 97];
 const CONTROL_ROD_SPACING_IN_COLS = 4;  // In units of uranium atoms
 const URANIUM_SPAWN_CHANCE_ON_INIT = 0.1;
-const NEUTRON_SPAWN_CHANCE_PER_FRAME = 0.0012;
-const XENON_SPAWN_CHANCE_ON_IMPACT = 0.75;
-const NEUTRON_ABSORB_CHANCE_PER_FRAME = 0.05;
+const NEUTRON_SPAWN_CHANCE_PER_FRAME = 0.0048;
+const XENON_SPAWN_CHANCE_ON_IMPACT = 0.15;
+const NEUTRON_ABSORB_CHANCE_PER_FRAME = 0.10;
 const URANIUM_SPAWN_CHANCE_PER_FRAME = 0.0024;
-const WATER_COOLING_RATE_PER_SECOND = 0.012;
-const NEUTRON_HEAT_ADDITION = 0.25;
+const WATER_COOLING_RATE_PER_SECOND = 0.05;
+const NEUTRON_HEAT_ADDITION = 0.1;
+const URANIUM_HEAT_ADDITION = 0.2;
+
 const k = kaplay({
     background: BACKGROUND_COLOR
 });
@@ -168,7 +170,7 @@ function spawnModerator({ pos, height_px }) {
 
 function spawnControlRod({ pos }) {
     const mod_pos = k.vec2(pos.x, pos.y + MAP_HEIGHT_IN_PX);
-    const moderator = spawnModerator({ pos: mod_pos, height_px: 200 });
+    const moderator = spawnModerator({ pos: mod_pos, height_px: MAP_HEIGHT_IN_PX/3 });
 
     const rod = k.add([
         k.pos(pos.x, pos.y),
@@ -304,8 +306,20 @@ k.scene("main", () => {
         { neutronCount: 0 }
     ]);
 
+    const xenonCounter = k.add([
+        k.pos(window.screen.width / 4, 20),
+        k.text("Xenon: 0", { size: 16 }),
+        k.color(0, 0, 0),
+        k.anchor("center"),
+        { xenonCount: 0 }
+    ]);
+
     neutronCounter.onUpdate(() => {
-        neutronCounter.text = `Neutrons: ${k.get("neutron").length}`
+        neutronCounter.text = `Neutrons: ${k.get("neutron").length + k.get("fastNeutron").length}`
+    });
+
+    xenonCounter.onUpdate(() => {
+        xenonCounter.text = `Xenon: ${k.get("xenon").length}`
     });
 
     function move_player() {
@@ -387,6 +401,16 @@ k.scene("main", () => {
     });
 
     k.onCollide("neutron", "uranium", (neutron, uranium, collision) => {
+        // heat water
+        let x = Math.min(Math.max(Math.floor((neutron.pos.x - (BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX)) / URANIUM_SPACING_IN_PX), 0), MAP_SIZE_IN_COLS - 1);
+        let y = Math.min(Math.max(Math.floor((neutron.pos.y - (BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX)) / URANIUM_SPACING_IN_PX), 0), MAP_SIZE_IN_ROWS - 1);
+        if (water[x][y] < 1.0) {
+            water[x][y].temp += URANIUM_HEAT_ADDITION;
+        }
+        else {
+            water[x][y].temp += URANIUM_HEAT_ADDITION/10;
+        }
+
         // Spawn two neutrons with fully random directions
         for (let i = 0; i < 2; i++) {
             spawnFastNeutron({
