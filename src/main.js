@@ -51,7 +51,7 @@ const CONTROL_ROD_SPACING_IN_COLS = 4;  // In units of uranium atoms
 const URANIUM_SPAWN_CHANCE_ON_INIT = 0.1;
 const NEUTRON_SPAWN_CHANCE_PER_FRAME = 0.0024;
 const MAX_NEUTRON_SPAWN_CHANCE_PER_FRAME = 0.0024;
-const NEUTRON_RAMP_TIME = 60;
+const NEUTRON_RAMP_TIME = 120;
 const XENON_SPAWN_CHANCE_ON_IMPACT = 0.15;
 const NEUTRON_ABSORB_CHANCE_PER_FRAME = 0.02;
 const URANIUM_SPAWN_CHANCE_PER_FRAME = 0.0024;
@@ -860,7 +860,7 @@ scene("fission", () => {
         ),
         k.pos(textX, y),
         k.anchor("left"),
-        k.scale(0.7),
+        k.scale(0.5),
         k.color(WALL_COLOR),
         k.z(TEXT_Z),
     ]);
@@ -875,7 +875,7 @@ scene("fission", () => {
         ),
         k.pos(textX, y),
         k.anchor("left"),
-        k.scale(0.7),
+        k.scale(0.5),
         k.color(WALL_COLOR),
         k.z(TEXT_Z),
     ]);
@@ -890,7 +890,7 @@ scene("fission", () => {
         ),
         k.pos(textX, y),
         k.anchor("left"),
-        k.scale(0.7),
+        k.scale(0.5),
         k.color(WALL_COLOR),
         k.z(TEXT_Z),
     ]);
@@ -907,7 +907,23 @@ scene("fission", () => {
         ),
         k.pos(textX, y),
         k.anchor("left"),
-        k.scale(0.7),
+        k.scale(0.5),
+        k.color(WALL_COLOR),
+        k.z(TEXT_Z),
+    ]);
+    y += lineH + 6;
+
+    add([
+        k.rect(URANIUM_SPACING_IN_PX, URANIUM_SPACING_IN_PX),
+        k.color(COOL_WATER_COLOR), k.pos(iconX, y + 6), k.anchor("left"), k.z(TEXT_Z)]);
+    add([
+        k.text(
+            "WATER absorbs SLOW NEUTRONS and HEATS up, eventually it can EVAPORATE!",
+            { width: wrapWidth }
+        ),
+        k.pos(textX, y),
+        k.anchor("left"),
+        k.scale(0.5),
         k.color(WALL_COLOR),
         k.z(TEXT_Z),
     ]);
