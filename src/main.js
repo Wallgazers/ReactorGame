@@ -2,27 +2,26 @@ import kaplay from "kaplay";
 
 const PLAYER_SPEED = 480;
 const ROD_SPEED = 24;
+const NEUTRON_SPEED = 150;
+const FAST_NEUTRON_SPEED = 300;
 
 const WINDOW_WIDTH_IN_PX = window.screen.width;
 const WINDOW_HEIGHT_IN_PX = window.screen.height;
+const MIN_DIMENSION = Math.min(WINDOW_HEIGHT_IN_PX, WINDOW_WIDTH_IN_PX)
 
 // TODO: later map size should scale with a difficulty slider
 const MAP_SIZE_IN_COLS = 24;
 const MAP_SIZE_IN_ROWS = 12;
-const NEUTRON_RADIUS_IN_PX = 8;
-//const URANIUM_RADIUS_IN_PX = 18;
-//const URANIUM_SPACING_IN_PX = 64;
-const CONTROL_ROD_WIDTH_IN_PX = 16;
 
-
-
-const URANIUM_SPACING_IN_PX = Math.floor(0.85 * WINDOW_HEIGHT_IN_PX / (MAP_SIZE_IN_ROWS + 2.5));
+const URANIUM_SPACING_IN_PX = Math.floor(0.85 * MIN_DIMENSION / (MAP_SIZE_IN_ROWS + 2.5));
 const URANIUM_RADIUS_IN_PX = 0.25 * URANIUM_SPACING_IN_PX
 const BOUNDS_OFFSET_IN_PX = 1.5 * URANIUM_SPACING_IN_PX;
 
-const MAP_WIDTH_IN_PX = (MAP_SIZE_IN_COLS + 0.25) * URANIUM_SPACING_IN_PX;
-const MAP_HEIGHT_IN_PX = (MAP_SIZE_IN_ROWS + 0.25) * URANIUM_SPACING_IN_PX;
-const MAP_WALL_WIDTH_IN_PX = 24;
+const MAP_WIDTH_IN_PX = (MAP_SIZE_IN_COLS) * URANIUM_SPACING_IN_PX;
+const MAP_HEIGHT_IN_PX = (MAP_SIZE_IN_ROWS) * URANIUM_SPACING_IN_PX;
+const MAP_WALL_WIDTH_IN_PX = Math.floor(0.02 * MIN_DIMENSION);
+const NEUTRON_RADIUS_IN_PX = URANIUM_RADIUS_IN_PX / 3;
+const CONTROL_ROD_WIDTH_IN_PX = URANIUM_SPACING_IN_PX / 4;
 
 const PLAYER_Z = 12;
 const CONTROL_ROD_Z = 11;
@@ -30,12 +29,15 @@ const NEUTRON_Z = 10;
 const URANIUM_Z = 2;
 const DOCILE_URANIUM_Z = 2;
 const WATER_Z = 1;
+const WALL_Z = 16;
+const BACKGROUND_Z = 15;
+const TEXT_Z = 17;
 
 const BACKGROUND_COLOR = [253, 246, 227];
 const URANIUM_COLOR = [38, 139, 210];
 const DOCILE_URANIUM_COLOR = [147, 161, 161];
 const NEUTRON_COLOR = [0, 43, 54];
-const FAST_NEUTRON_COLOR = [255, 255, 255];
+const FAST_NEUTRON_COLOR = [255, 127, 80];
 const CONTROL_ROD_COLOR = [0, 43, 54];
 const XENON_COLOR = CONTROL_ROD_COLOR;
 const COOL_WATER_COLOR = [173, 216, 230];
@@ -196,17 +198,44 @@ function spawnControlRod({ pos }) {
 let water = create2DArray(MAP_SIZE_IN_COLS, MAP_SIZE_IN_ROWS, null);
 
 function spawnReactor() {
+    // add "roof"
+    add([
+        k.rect(
+            WINDOW_WIDTH_IN_PX,
+            BOUNDS_OFFSET_IN_PX - (URANIUM_SPACING_IN_PX/2)
+        ),
+        k.anchor("topleft"),
+        k.pos(0, 0),
+        k.color(BACKGROUND_COLOR),
+        k.body({ isStatic: true }),
+        k.z(BACKGROUND_Z)
+    ]);
+
+    // add "floor"
+    add([
+        k.rect(
+            WINDOW_WIDTH_IN_PX,
+            WINDOW_HEIGHT_IN_PX - MAP_HEIGHT_IN_PX - BOUNDS_OFFSET_IN_PX - 2*MAP_WALL_WIDTH_IN_PX
+        ),
+        k.anchor("topleft"),
+        k.pos(0, BOUNDS_OFFSET_IN_PX + MAP_HEIGHT_IN_PX - (URANIUM_SPACING_IN_PX/2)),
+        k.color(BACKGROUND_COLOR),
+        k.body({ isStatic: true }),
+        k.z(BACKGROUND_Z)
+    ]);
+
     // add left wall
     add([
         k.rect(MAP_WALL_WIDTH_IN_PX, 2 * MAP_WALL_WIDTH_IN_PX + MAP_HEIGHT_IN_PX),
         k.pos(
-            BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX,
-            BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX
+            BOUNDS_OFFSET_IN_PX - (URANIUM_SPACING_IN_PX/2) - MAP_WALL_WIDTH_IN_PX,
+            BOUNDS_OFFSET_IN_PX - (URANIUM_SPACING_IN_PX/2) - MAP_WALL_WIDTH_IN_PX
         ),
         k.anchor("topleft"),
         k.area(),
         k.body({ isStatic: true }),
         k.color(0, 0, 0),
+        k.z(WALL_Z),
         "wall"
     ]);
 
@@ -214,13 +243,14 @@ function spawnReactor() {
     add([
         k.rect(MAP_WALL_WIDTH_IN_PX, 2 * MAP_WALL_WIDTH_IN_PX + MAP_HEIGHT_IN_PX),
         k.pos(
-            BOUNDS_OFFSET_IN_PX + MAP_WALL_WIDTH_IN_PX - URANIUM_SPACING_IN_PX + MAP_WIDTH_IN_PX,
-            BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX
+            BOUNDS_OFFSET_IN_PX - (URANIUM_SPACING_IN_PX/2) + MAP_WIDTH_IN_PX,
+            BOUNDS_OFFSET_IN_PX - (URANIUM_SPACING_IN_PX/2) - MAP_WALL_WIDTH_IN_PX
         ),
         k.anchor("topleft"),
         k.area(),
         k.body({ isStatic: true }),
         k.color(0, 0, 0),
+        k.z(WALL_Z),
         "wall"
     ]);
 
@@ -228,13 +258,14 @@ function spawnReactor() {
     add([
         k.rect(MAP_WIDTH_IN_PX, MAP_WALL_WIDTH_IN_PX),
         k.pos(
-            BOUNDS_OFFSET_IN_PX + MAP_WALL_WIDTH_IN_PX - URANIUM_SPACING_IN_PX,
-            BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX
+            BOUNDS_OFFSET_IN_PX - (URANIUM_SPACING_IN_PX/2),
+            BOUNDS_OFFSET_IN_PX - (URANIUM_SPACING_IN_PX/2) - MAP_WALL_WIDTH_IN_PX
         ),
         k.anchor("topleft"),
         k.area(),
         k.body({ isStatic: true }),
         k.color(0, 0, 0),
+        k.z(WALL_Z),
         "wall"
     ]);
 
@@ -242,20 +273,21 @@ function spawnReactor() {
     add([
         k.rect(MAP_WIDTH_IN_PX, MAP_WALL_WIDTH_IN_PX),
         k.pos(
-            BOUNDS_OFFSET_IN_PX + MAP_WALL_WIDTH_IN_PX - URANIUM_SPACING_IN_PX,
-            BOUNDS_OFFSET_IN_PX + MAP_WALL_WIDTH_IN_PX + MAP_HEIGHT_IN_PX - URANIUM_SPACING_IN_PX
+            BOUNDS_OFFSET_IN_PX - (URANIUM_SPACING_IN_PX/2),
+            BOUNDS_OFFSET_IN_PX + MAP_HEIGHT_IN_PX - (URANIUM_SPACING_IN_PX/2)
         ),
         k.anchor("topleft"),
         k.area(),
         k.body({ isStatic: true }),
         k.color(0, 0, 0),
+        k.z(WALL_Z),
         "wall"
     ]);
 
     for (let i = 0; i < MAP_SIZE_IN_COLS; i += 1) {
         if ((i + 3) % CONTROL_ROD_SPACING_IN_COLS == 0) {
-            spawnControlRod({ pos: { x: BOUNDS_OFFSET_IN_PX + (i * URANIUM_SPACING_IN_PX) + (URANIUM_SPACING_IN_PX / 2), y: BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX + MAP_WALL_WIDTH_IN_PX } });
-            spawnModerator({ pos: { x: BOUNDS_OFFSET_IN_PX + ((i-2) * URANIUM_SPACING_IN_PX) + (URANIUM_SPACING_IN_PX / 2), y: BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX + MAP_WALL_WIDTH_IN_PX }, height_px: MAP_HEIGHT_IN_PX });
+            spawnControlRod({ pos: { x: BOUNDS_OFFSET_IN_PX + (i * URANIUM_SPACING_IN_PX) + (URANIUM_SPACING_IN_PX / 2), y: BOUNDS_OFFSET_IN_PX - (URANIUM_SPACING_IN_PX/2)} });
+            spawnModerator({ pos: { x: BOUNDS_OFFSET_IN_PX + ((i-2) * URANIUM_SPACING_IN_PX) + (URANIUM_SPACING_IN_PX / 2), y: BOUNDS_OFFSET_IN_PX - (URANIUM_SPACING_IN_PX/2) }, height_px: MAP_HEIGHT_IN_PX });
         };
         for (let j = 0; j < MAP_SIZE_IN_ROWS; j += 1) {
             if (Math.random() < URANIUM_SPAWN_CHANCE_ON_INIT) {
@@ -269,7 +301,7 @@ function spawnReactor() {
     }
 
 
-    spawnModerator({ pos: { x: BOUNDS_OFFSET_IN_PX + ((MAP_SIZE_IN_COLS - 1) * URANIUM_SPACING_IN_PX) + (URANIUM_SPACING_IN_PX / 2), y: BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX + MAP_WALL_WIDTH_IN_PX }, height_px: MAP_HEIGHT_IN_PX });
+    spawnModerator({ pos: { x: BOUNDS_OFFSET_IN_PX + ((MAP_SIZE_IN_COLS - 1) * URANIUM_SPACING_IN_PX) + (URANIUM_SPACING_IN_PX / 2), y: BOUNDS_OFFSET_IN_PX - (URANIUM_SPACING_IN_PX/2) }, height_px: MAP_HEIGHT_IN_PX });
 }
 
 function create2DArray(rows, cols, initialValue) {
@@ -303,6 +335,7 @@ k.scene("main", () => {
         k.text("Neutrons: 0", { size: 16 }),
         k.color(0, 0, 0),
         k.anchor("center"),
+        k.z(TEXT_Z),
         { neutronCount: 0 }
     ]);
 
@@ -311,6 +344,7 @@ k.scene("main", () => {
         k.text("Xenon: 0", { size: 16 }),
         k.color(0, 0, 0),
         k.anchor("center"),
+        k.z(TEXT_Z),
         { xenonCount: 0 }
     ]);
 
@@ -372,11 +406,11 @@ k.scene("main", () => {
             // k.debug.log(`absorbed at ${x}, ${y}, water[${x}][${y}].temp = ${water[x][y].temp}`);
         }
 
-        neutron.move(neutron.dir.scale(300));
+        neutron.move(neutron.dir.scale(NEUTRON_SPEED));
     });
 
     k.onUpdate("fastNeutron", (fastNeutron) => {
-        fastNeutron.move(fastNeutron.dir.scale(450));
+        fastNeutron.move(fastNeutron.dir.scale(FAST_NEUTRON_SPEED));
     });
 
     k.onUpdate("docile", (docile) => {
@@ -500,7 +534,7 @@ k.scene("main", () => {
         if (k.isKeyDown("q")) dir.y = 1;
         controlRod.move(dir.scale(ROD_SPEED));
 
-        let final_y = Math.min(Math.max(-1*MAP_HEIGHT_IN_PX + URANIUM_SPACING_IN_PX, controlRod.pos.y), BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX + MAP_WALL_WIDTH_IN_PX)
+        let final_y = Math.min(Math.max(-1*MAP_HEIGHT_IN_PX + URANIUM_SPACING_IN_PX, controlRod.pos.y), BOUNDS_OFFSET_IN_PX - (URANIUM_SPACING_IN_PX/2))
         controlRod.pos.y = final_y
     });
 
