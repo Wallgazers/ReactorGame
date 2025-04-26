@@ -46,17 +46,17 @@ const XENON_COLOR = CONTROL_ROD_COLOR;
 const COOL_WATER_COLOR = [173, 216, 230];
 const HOT_WATER_COLOR = [255, 105, 97];
 const CONTROL_ROD_SPACING_IN_COLS = 4;  // In units of uranium atoms
-const URANIUM_SPAWN_CHANCE_ON_INIT = 0.2;
-const NEUTRON_SPAWN_CHANCE_PER_FRAME = 0.0012;
+const URANIUM_SPAWN_CHANCE_ON_INIT = 0.1;
+const NEUTRON_SPAWN_CHANCE_PER_FRAME = 0.0024;
 const XENON_SPAWN_CHANCE_ON_IMPACT = 0.15;
 const NEUTRON_ABSORB_CHANCE_PER_FRAME = 0.02;
-const URANIUM_SPAWN_CHANCE_PER_FRAME = 0.0036;
+const URANIUM_SPAWN_CHANCE_PER_FRAME = 0.0024;
 const WATER_COOLING_RATE_PER_SECOND = 0.012;
 const NEUTRON_HEAT_ADDITION = 0.1;
 const URANIUM_HEAT_ADDITION = 0.4;
 
 const NEUTRON_TARGET = 36;
-const NEUTRON_DELTA = 12;
+const NEUTRON_DELTA = 10;
 const TARGET_TIMER_SECS = 8;
 
 const k = kaplay({
@@ -398,7 +398,7 @@ k.scene("main", () => {
 
     // TODO: Record a history of the count to render to a line chart?
     const neutronCounter = k.add([
-        k.pos(BOUNDS_OFFSET_IN_PX + 0.5*MAP_WIDTH_IN_PX, BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX/2 - 2*MAP_WALL_WIDTH_IN_PX),
+        k.pos(BOUNDS_OFFSET_IN_PX + 0.5*MAP_WIDTH_IN_PX, BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX/2 + MAP_HEIGHT_IN_PX + 2*MAP_WALL_WIDTH_IN_PX),
         k.text("Thermal Neutrons: 0"),
         k.scale(0.5),
         k.color(BUTTON_COLOR),
@@ -408,7 +408,7 @@ k.scene("main", () => {
     ]);
 
     const xenonCounter = k.add([
-        k.pos(BOUNDS_OFFSET_IN_PX + 0.25*MAP_WIDTH_IN_PX, BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX/2 - 2*MAP_WALL_WIDTH_IN_PX),
+        k.pos(BOUNDS_OFFSET_IN_PX + 0.25*MAP_WIDTH_IN_PX, BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX/2 + MAP_HEIGHT_IN_PX + 2*MAP_WALL_WIDTH_IN_PX),
         k.text("Xenon: 0"),
         k.scale(0.5),
         k.color(0, 0, 0),
@@ -418,7 +418,7 @@ k.scene("main", () => {
     ]);
 
     const healthCounter = k.add([
-        k.pos(BOUNDS_OFFSET_IN_PX, BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX/2 - 2*MAP_WALL_WIDTH_IN_PX),
+        k.pos(BOUNDS_OFFSET_IN_PX, BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX/2 + MAP_HEIGHT_IN_PX + 2*MAP_WALL_WIDTH_IN_PX),
         k.text("HP: 0"),
         k.scale(0.5),
         k.color(0, 0, 0),
@@ -428,7 +428,7 @@ k.scene("main", () => {
     ]);
 
     const timeCounter = k.add([
-        k.pos(BOUNDS_OFFSET_IN_PX + 0.75*MAP_WIDTH_IN_PX, BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX/2 - 2*MAP_WALL_WIDTH_IN_PX),
+        k.pos(BOUNDS_OFFSET_IN_PX + 0.75*MAP_WIDTH_IN_PX, BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX/2 + MAP_HEIGHT_IN_PX + 2*MAP_WALL_WIDTH_IN_PX),
         k.text("Time Remaining: 0 seconds"),
         k.scale(0.5),
         k.color(0, 0, 0),
