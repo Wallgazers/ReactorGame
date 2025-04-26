@@ -261,10 +261,10 @@ function spawnReactor() {
     add([
         k.rect(
             WINDOW_WIDTH_IN_PX,
-            BOUNDS_OFFSET_IN_PX - (URANIUM_SPACING_IN_PX/2)
+            BOUNDS_OFFSET_IN_PX - (URANIUM_SPACING_IN_PX/2) + MAP_HEIGHT_IN_PX
         ),
         k.anchor("topleft"),
-        k.pos(0, 0),
+        k.pos(0, -1*MAP_HEIGHT_IN_PX),
         k.color(BACKGROUND_COLOR),
         k.body({ isStatic: true }),
         k.z(BACKGROUND_Z)
@@ -383,7 +383,6 @@ k.scene("main", () => {
         k.body(),
         k.z(PLAYER_Z),
         { dir: k.vec2(0, 0) },
-        { controlRodContactStartPos: k.vec2(0, 0) },
         { currentAnim: null },
         { health: PLAYER_HP },
         "player"
@@ -639,9 +638,9 @@ k.scene("main", () => {
         }
     });
 
-    k.onCollide("player", "controlRod", (player, controlRod, collision) => {
-        player.controlRodContactStartPos = player.pos;
-    });
+    // k.onCollide("player", "controlRod", (player, controlRod, collision) => {
+    //     player.controlRodContactStartPos = player.pos;
+    // });
 
     k.onUpdate("controlRod", (controlRod) => {
         let dir = k.vec2(0, 0);
@@ -656,19 +655,17 @@ k.scene("main", () => {
 
     k.onCollideUpdate("player", "controlRod", (player, controlRod, collision) => {
         if (k.isKeyDown("space")) {
-            const ceiling = BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX + MAP_WALL_WIDTH_IN_PX;
+            const ceiling = BOUNDS_OFFSET_IN_PX - MAP_HEIGHT_IN_PX;
 
-            let rod_current_pos = controlRod.pos;
-            let delta = player.pos.y - player.controlRodContactStartPos.y;
-
-            controlRod.pos = k.vec2(
-                rod_current_pos.x,
-                Math.min(rod_current_pos.y + delta, ceiling)
-            );
-
-            player.controlRodContactStartPos = player.pos;
+            let dir = k.vec2(0, player.dir.y);
+            controlRod.move(dir.scale(PLAYER_SPEED/1.9));
             controlRod.outline.width = 4;
             controlRod.outline.color = k.YELLOW;
+
+            controlRod.pos = k.vec2(
+                controlRod.pos.x,
+                Math.max(controlRod.pos.y, ceiling)
+            );
         }
     });
 
