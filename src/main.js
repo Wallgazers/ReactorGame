@@ -436,7 +436,7 @@ k.scene("main", () => {
 
     const timeCounter = k.add([
         k.pos(BOUNDS_OFFSET_IN_PX + 0.75 * MAP_WIDTH_IN_PX, BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX / 2 + MAP_HEIGHT_IN_PX + 2 * MAP_WALL_WIDTH_IN_PX),
-        k.text("Time Remaining: 0 seconds"),
+        k.text("Victory Countdown: 0 seconds"),
         k.scale(0.5),
         k.color(0, 0, 0),
         k.anchor("center"),
