@@ -1,8 +1,8 @@
 import kaplay from "kaplay";
 
-const PLAYER_HP = 20;
+const PLAYER_HP = 50;
 const PLAYER_SPEED = 400;
-const ROD_SPEED = 24;
+const ROD_SPEED = 36;
 const NEUTRON_SPEED = 150;
 const FAST_NEUTRON_SPEED = 300;
 
@@ -24,9 +24,9 @@ const MAP_WALL_WIDTH_IN_PX = Math.floor(0.02 * MIN_DIMENSION);
 const NEUTRON_RADIUS_IN_PX = URANIUM_RADIUS_IN_PX / 3;
 const CONTROL_ROD_WIDTH_IN_PX = URANIUM_SPACING_IN_PX / 4;
 
-const PLAYER_Z = 12;
+const PLAYER_Z = 13;
 const CONTROL_ROD_Z = 11;
-const NEUTRON_Z = 10;
+const NEUTRON_Z = 12;
 const URANIUM_Z = 2;
 const DOCILE_URANIUM_Z = 2;
 const WATER_Z = 1;
@@ -46,18 +46,18 @@ const XENON_COLOR = CONTROL_ROD_COLOR;
 const COOL_WATER_COLOR = [173, 216, 230];
 const HOT_WATER_COLOR = [255, 105, 97];
 const CONTROL_ROD_SPACING_IN_COLS = 4;  // In units of uranium atoms
-const URANIUM_SPAWN_CHANCE_ON_INIT = 0.1;
-const NEUTRON_SPAWN_CHANCE_PER_FRAME = 0.0048;
+const URANIUM_SPAWN_CHANCE_ON_INIT = 0.2;
+const NEUTRON_SPAWN_CHANCE_PER_FRAME = 0.0012;
 const XENON_SPAWN_CHANCE_ON_IMPACT = 0.15;
-const NEUTRON_ABSORB_CHANCE_PER_FRAME = 0.10;
-const URANIUM_SPAWN_CHANCE_PER_FRAME = 0.0024;
-const WATER_COOLING_RATE_PER_SECOND = 0.05;
+const NEUTRON_ABSORB_CHANCE_PER_FRAME = 0.02;
+const URANIUM_SPAWN_CHANCE_PER_FRAME = 0.0036;
+const WATER_COOLING_RATE_PER_SECOND = 0.012;
 const NEUTRON_HEAT_ADDITION = 0.1;
-const URANIUM_HEAT_ADDITION = 0.2;
+const URANIUM_HEAT_ADDITION = 0.4;
 
-const NEUTRON_TARGET = 50;
-const NEUTRON_DELTA = 10;
-const TARGET_TIMER_SECS = 10;
+const NEUTRON_TARGET = 36;
+const NEUTRON_DELTA = 12;
+const TARGET_TIMER_SECS = 8;
 
 const k = kaplay({
     background: BACKGROUND_COLOR
@@ -537,17 +537,15 @@ k.scene("main", () => {
 
     k.onCollide("neutron", "controlRod", (neutron) => {
         neutron.destroy();
-        k.play("absorb", { volume: 0.1 });
     });
 
     k.onCollide("neutron", "wall", (neutron) => {
         neutron.destroy();
-        k.play("absorb", { volume: 0.1 });
     });
 
     k.onCollide("neutron", "player", (neutron, player) => {
         player.health -= 1;
-        neutron.destroy;
+        neutron.destroy();
         k.play("hit", { volume: 0.5 });
         k.shake();
     });
