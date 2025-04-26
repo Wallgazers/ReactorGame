@@ -23,6 +23,8 @@ const MAP_HEIGHT_IN_PX = (MAP_SIZE_IN_ROWS) * URANIUM_SPACING_IN_PX;
 const MAP_WALL_WIDTH_IN_PX = Math.floor(0.02 * MIN_DIMENSION);
 const NEUTRON_RADIUS_IN_PX = URANIUM_RADIUS_IN_PX / 3;
 const CONTROL_ROD_WIDTH_IN_PX = URANIUM_SPACING_IN_PX / 4;
+// Neutrons shouldn't appear too close to the player
+const NEUTRON_PLAYER_CLEAR_RADIUS = 200;
 
 const PLAYER_Z = 13;
 const CONTROL_ROD_Z = 11;
@@ -456,7 +458,7 @@ k.scene("main", () => {
             // Ramp up over NEUTRON_RAMP_TIME seconds
             currentNeutronSpawnRate + (MAX_URANIUM_SPAWN_CHANCE_PER_FRAME / NEUTRON_RAMP_TIME) * k.dt()
         );
-        
+
 
         let n_neutrons = k.get("neutron").length;
         neutronCounter.text = `Thermal Neutrons: ${n_neutrons}`;
@@ -539,7 +541,11 @@ k.scene("main", () => {
     });
 
     k.onUpdate("docile", (docile) => {
-        if (Math.random() < currentNeutronSpawnRate) {
+        if (
+            // Only spawn neutrons away from the player
+            docile.pos.dist(player.pos) > NEUTRON_PLAYER_CLEAR_RADIUS &&
+            Math.random() < currentNeutronSpawnRate
+        ) {
             spawnNeutron({ pos: docile.pos, dir: getRndVector() });
         }
     });
