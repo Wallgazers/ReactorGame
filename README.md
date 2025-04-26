@@ -31,4 +31,6 @@ will build your game and package into a .zip file, you can upload to your server
 [Game Inspiration](https://www.youtube.com/watch?v=P3oKNE72EzU)
 [Solarized Color Scheme](https://ethanschoonover.com/solarized/)
 [sharp-pop.mp3](https://pixabay.com/sound-effects/sharp-pop-328170/)
+[cancel.mp3](https://jdwasabi.itch.io/8-bit-16-bit-sound-effects-pack)
+[hit.mp3](https://jdwasabi.itch.io/8-bit-16-bit-sound-effects-pack)
 [yuri.png](https://limezu.itch.io/moderninteriors)

@@ -81,6 +81,8 @@ k.loadSprite("yuri", "sprites/yuri.png", {
     },
 });
 k.loadSound("pop", "sounds/sharp-pop.mp3");
+k.loadSound("absorb", "sounds/cancel.mp3");
+k.loadSound("hit", "sounds/hit.mp3");
 
 function getRndVector({ min_angle, max_angle } = { min_angle: 0, max_angle: 2 * Math.PI }) {
     const angle = Math.random() * (max_angle - min_angle) + min_angle;
@@ -535,15 +537,18 @@ k.scene("main", () => {
 
     k.onCollide("neutron", "controlRod", (neutron) => {
         neutron.destroy();
+        k.play("absorb", { volume: 0.1 });
     });
 
     k.onCollide("neutron", "wall", (neutron) => {
         neutron.destroy();
+        k.play("absorb", { volume: 0.1 });
     });
 
     k.onCollide("neutron", "player", (neutron, player) => {
         player.health -= 1;
         neutron.destroy;
+        k.play("hit", { volume: 0.5 });
         k.shake();
     });
 
