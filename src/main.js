@@ -1,6 +1,6 @@
 import kaplay from "kaplay";
 
-const PLAYER_SPEED = 480;
+const PLAYER_SPEED = 400;
 const ROD_SPEED = 24;
 const NEUTRON_SPEED = 150;
 const FAST_NEUTRON_SPEED = 300;
@@ -37,8 +37,10 @@ const BACKGROUND_COLOR = [253, 246, 227];
 const URANIUM_COLOR = [38, 139, 210];
 const DOCILE_URANIUM_COLOR = [147, 161, 161];
 const NEUTRON_COLOR = [0, 43, 54];
-const FAST_NEUTRON_COLOR = [255, 127, 80];
-const CONTROL_ROD_COLOR = [0, 43, 54];
+const FAST_NEUTRON_COLOR = [203, 75, 22];
+const BUTTON_COLOR = [220, 50, 47];
+const CONTROL_ROD_COLOR = [7, 54, 66];
+const WALL_COLOR = [0, 0, 0];
 const XENON_COLOR = CONTROL_ROD_COLOR;
 const COOL_WATER_COLOR = [173, 216, 230];
 const HOT_WATER_COLOR = [255, 105, 97];
@@ -51,6 +53,9 @@ const URANIUM_SPAWN_CHANCE_PER_FRAME = 0.0024;
 const WATER_COOLING_RATE_PER_SECOND = 0.05;
 const NEUTRON_HEAT_ADDITION = 0.1;
 const URANIUM_HEAT_ADDITION = 0.2;
+
+let raise_rods = false;
+let scram = false;
 
 const k = kaplay({
     background: BACKGROUND_COLOR
@@ -132,7 +137,6 @@ function spawnDocileUranium({ pos }) {
 }
 
 function spawnXenon({ pos }) {
-    //k.debug.log("spawnXenon");
     k.add([
         k.pos(pos.x, pos.y),
         k.circle(URANIUM_RADIUS_IN_PX),
@@ -165,7 +169,6 @@ function spawnModerator({ pos, height_px }) {
         k.anchor("top"),
         k.z(CONTROL_ROD_Z),
         k.color(108, 113, 196),
-        //k.outline({ width: 4, color: k.YELLOW }),
         "moderator"
     ]);
 }
@@ -198,6 +201,60 @@ function spawnControlRod({ pos }) {
 let water = create2DArray(MAP_SIZE_IN_COLS, MAP_SIZE_IN_ROWS, null);
 
 function spawnReactor() {
+    // add raise button
+    add([
+        k.rect(URANIUM_SPACING_IN_PX / 1.5, URANIUM_SPACING_IN_PX / 4),
+        k.anchor("bot"),
+        k.pos(
+            BOUNDS_OFFSET_IN_PX + (URANIUM_SPACING_IN_PX/2),
+            BOUNDS_OFFSET_IN_PX + MAP_HEIGHT_IN_PX - (URANIUM_SPACING_IN_PX/2)
+        ),
+        k.area({ collisionIgnore: ["neutron", "fastNeutron"] }),
+        k.body({ isStatic: true }),
+        k.color(BUTTON_COLOR),
+        k.outline({ width: 0, color: k.YELLOW }),
+        k.z(CONTROL_ROD_Z),
+        "raiseButton"
+    ]);
+
+    add([
+        k.pos(
+            BOUNDS_OFFSET_IN_PX + (URANIUM_SPACING_IN_PX/2),
+            BOUNDS_OFFSET_IN_PX + MAP_HEIGHT_IN_PX - (URANIUM_SPACING_IN_PX/2)
+        ),
+        k.text("UP", { size: URANIUM_SPACING_IN_PX / 5 }),
+        k.color(WALL_COLOR),
+        k.anchor("bot"),
+        k.z(TEXT_Z)
+    ]);
+
+    // add SCRAM button
+    add([
+        k.rect(URANIUM_SPACING_IN_PX / 1.5, URANIUM_SPACING_IN_PX / 4),
+        k.anchor("bot"),
+        k.pos(
+            BOUNDS_OFFSET_IN_PX - (1.5* URANIUM_SPACING_IN_PX) + MAP_WIDTH_IN_PX,
+            BOUNDS_OFFSET_IN_PX + MAP_HEIGHT_IN_PX - (URANIUM_SPACING_IN_PX/2)
+        ),
+        k.area({ collisionIgnore: ["neutron", "fastNeutron"] }),
+        k.body({ isStatic: true }),
+        k.color(BUTTON_COLOR),
+        k.outline({ width: 0, color: k.YELLOW }),
+        k.z(CONTROL_ROD_Z),
+        "scramButton"
+    ]);
+
+    add([
+        k.pos(
+            BOUNDS_OFFSET_IN_PX - (1.5* URANIUM_SPACING_IN_PX) + MAP_WIDTH_IN_PX,
+            BOUNDS_OFFSET_IN_PX + MAP_HEIGHT_IN_PX - (URANIUM_SPACING_IN_PX/2)
+        ),
+        k.text("SCRAM", { size: URANIUM_SPACING_IN_PX / 5 }),
+        k.color(WALL_COLOR),
+        k.anchor("bot"),
+        k.z(TEXT_Z)
+    ]);
+
     // add "roof"
     add([
         k.rect(
@@ -234,7 +291,7 @@ function spawnReactor() {
         k.anchor("topleft"),
         k.area(),
         k.body({ isStatic: true }),
-        k.color(0, 0, 0),
+        k.color(WALL_COLOR),
         k.z(WALL_Z),
         "wall"
     ]);
@@ -249,7 +306,7 @@ function spawnReactor() {
         k.anchor("topleft"),
         k.area(),
         k.body({ isStatic: true }),
-        k.color(0, 0, 0),
+        k.color(WALL_COLOR),
         k.z(WALL_Z),
         "wall"
     ]);
@@ -264,7 +321,7 @@ function spawnReactor() {
         k.anchor("topleft"),
         k.area(),
         k.body({ isStatic: true }),
-        k.color(0, 0, 0),
+        k.color(WALL_COLOR),
         k.z(WALL_Z),
         "wall"
     ]);
@@ -279,7 +336,7 @@ function spawnReactor() {
         k.anchor("topleft"),
         k.area(),
         k.body({ isStatic: true }),
-        k.color(0, 0, 0),
+        k.color(WALL_COLOR),
         k.z(WALL_Z),
         "wall"
     ]);
@@ -326,8 +383,8 @@ k.scene("main", () => {
     player.play("walkRight");
 
     spawnReactor();
-    k.debug.log(`Width: ${WINDOW_WIDTH_IN_PX}`);
-    k.debug.log(`Height: ${WINDOW_HEIGHT_IN_PX}`);
+    //k.debug.log(`Width: ${WINDOW_WIDTH_IN_PX}`);
+    //k.debug.log(`Height: ${WINDOW_HEIGHT_IN_PX}`);
 
     // TODO: Record a history of the count to render to a line chart?
     const neutronCounter = k.add([
@@ -403,7 +460,6 @@ k.scene("main", () => {
         if (Math.random() < NEUTRON_ABSORB_CHANCE_PER_FRAME && water[x][y].temp < 1.0) {
             water[x][y].temp += NEUTRON_HEAT_ADDITION;
             neutron.destroy();
-            // k.debug.log(`absorbed at ${x}, ${y}, water[${x}][${y}].temp = ${water[x][y].temp}`);
         }
 
         neutron.move(neutron.dir.scale(NEUTRON_SPEED));
@@ -510,7 +566,6 @@ k.scene("main", () => {
 
     k.onCollide("neutron", "xenon", (neutron, xenon) => {
         if (xenon.collisionCountdown <= 0) {
-            //k.debug.log("burnt off xenon");
             spawnDocileUranium({
                 pos: {
                     x: xenon.pos.x,
@@ -524,14 +579,13 @@ k.scene("main", () => {
 
     k.onCollide("player", "controlRod", (player, controlRod, collision) => {
         player.controlRodContactStartPos = player.pos;
-        // k.debug.log(player.controlRodContactStartPos.y);
     });
 
     k.onUpdate("controlRod", (controlRod) => {
         let dir = k.vec2(0, 0);
 
-        if (k.isKeyDown("e")) dir.y = -1;
-        if (k.isKeyDown("q")) dir.y = 1;
+        if (raise_rods) dir.y = -1;
+        if (scram) dir.y = 1;
         controlRod.move(dir.scale(ROD_SPEED));
 
         let final_y = Math.min(Math.max(-1*MAP_HEIGHT_IN_PX + URANIUM_SPACING_IN_PX, controlRod.pos.y), BOUNDS_OFFSET_IN_PX - (URANIUM_SPACING_IN_PX/2))
@@ -556,6 +610,22 @@ k.scene("main", () => {
         }
     });
 
+    k.onCollideUpdate("player", "raiseButton", (player, raiseButton, collision) => {
+        if (k.isKeyDown("space")) {
+            raiseButton.outline.width = 4;
+            raiseButton.outline.color = k.YELLOW;
+            raise_rods = true;
+        }
+    });
+
+    k.onCollideUpdate("player", "scramButton", (player, scramButton, collision) => {
+        if (k.isKeyDown("space")) {
+            scramButton.outline.width = 4;
+            scramButton.outline.color = k.YELLOW;
+            scram = true;
+        }
+    });
+
     k.onUpdate("water", (water) => {
         // // Water cooling
         water.temp = Math.max(water.temp - WATER_COOLING_RATE_PER_SECOND * k.dt(), 0);
@@ -574,12 +644,30 @@ k.scene("main", () => {
 
     k.onUpdate(() => {
         const touchingRod = k.get("controlRod").some(rod => player.isColliding(rod));
+        const touchingUpButton = k.get("raiseButton").some(button => player.isColliding(button));
+        const touchingScramButton = k.get("scramButton").some(button => player.isColliding(button));
 
         if (!k.isKeyDown("space") || !touchingRod) {
             k.get("controlRod").forEach(rod => {
                 rod.outline.width = 0;
                 rod.outline.color = k.BLACK;
             });
+        }
+
+        if (!k.isKeyDown("space") || !touchingUpButton) {
+            k.get("raiseButton").forEach(button => {
+                button.outline.width = 0;
+                button.outline.color = k.BLACK;
+            });
+            raise_rods = false;
+        }
+
+        if (!k.isKeyDown("space") || !touchingScramButton) {
+            k.get("scramButton").forEach(button => {
+                button.outline.width = 0;
+                button.outline.color = k.BLACK;
+            });
+            scram = false;
         }
     });
 });
