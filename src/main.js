@@ -907,16 +907,17 @@ scene("fission", () => {
     // — Graphite moderator
     add([
         k.rect(CONTROL_ROD_WIDTH_IN_PX, URANIUM_SPACING_IN_PX),
-        k.color(), k.pos(iconX, y + 6), k.anchor("left"), k.z(TEXT_Z)]);
+        k.color(108, 113, 196),
+        k.pos(iconX, y + 6), k.anchor("left"), k.z(TEXT_Z)]);
     add([
         k.text(
-            "GRAPHITE slows FAST NEUTRONS down into SLOW NEUTRONS, increasing the power! You can walk throught these.",
+            "GRAPHITE slows FAST NEUTRONS down into SLOW NEUTRONS, increasing the power! You can walk through these.",
             { width: wrapWidth }
         ),
         k.pos(textX, y),
         k.anchor("left"),
         k.scale(0.5),
-        k.color(108, 113, 196),
+        k.color(BACKGROUND_COLOR),
         k.z(TEXT_Z),
     ]);
     y += lineH + 6;
@@ -984,7 +985,7 @@ scene("controls", () => {
     ]);
     add([
         k.text(
-            "CONTROL RODS absorb neutrons; raising them INCREASES the chain reaction, lowering them SLOWS it. Can be RAISED or LOWERED individually with SPACE. You can't walk throught these.",
+            "CONTROL RODS absorb neutrons; raising them INCREASES the chain reaction, lowering them SLOWS it. Can be RAISED or LOWERED individually with SPACE. You can't walk through these.",
             { width: wrapWidth }
         ),
         k.pos(textX, y),
