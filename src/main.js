@@ -482,7 +482,7 @@ k.scene("main", () => {
 
     timeCounter.onUpdate(() => {
         remaining_time = TARGET_TIMER_SECS - timer;
-        timeCounter.text = `Time Remaining: ${Math.floor(remaining_time)} seconds`;
+        timeCounter.text = `Victory Countdown: ${Math.floor(remaining_time)} seconds`;
         if (remaining_time <= 0) {
             k.go("end", 'Congratulations! Your operating is commendable.');
         }
