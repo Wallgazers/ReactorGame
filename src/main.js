@@ -1,5 +1,6 @@
 import kaplay from "kaplay";
 
+const PLAYER_HP = 20;
 const PLAYER_SPEED = 400;
 const ROD_SPEED = 24;
 const NEUTRON_SPEED = 150;
@@ -54,8 +55,9 @@ const WATER_COOLING_RATE_PER_SECOND = 0.05;
 const NEUTRON_HEAT_ADDITION = 0.1;
 const URANIUM_HEAT_ADDITION = 0.2;
 
-let raise_rods = false;
-let scram = false;
+const NEUTRON_TARGET = 50;
+const NEUTRON_DELTA = 10;
+const TARGET_TIMER_SECS = 10;
 
 const k = kaplay({
     background: BACKGROUND_COLOR
@@ -368,6 +370,12 @@ function create2DArray(rows, cols, initialValue) {
 }
 
 k.scene("main", () => {
+    let lastUpdate = Date.now();
+    let raise_rods = false;
+    let scram = false;
+    let remaining_time = TARGET_TIMER_SECS;
+    let timer = 0;
+
     const player = k.add([
         k.sprite("yuri"),
         k.pos(BOUNDS_OFFSET_IN_PX, MAP_HEIGHT_IN_PX / 2),
@@ -377,7 +385,7 @@ k.scene("main", () => {
         { dir: k.vec2(0, 0) },
         { controlRodContactStartPos: k.vec2(0, 0) },
         { currentAnim: null },
-        { health: 20 },
+        { health: PLAYER_HP },
         "player"
     ]);
 
@@ -390,8 +398,8 @@ k.scene("main", () => {
     // TODO: Record a history of the count to render to a line chart?
     const neutronCounter = k.add([
         k.pos(window.screen.width / 2, 20),
-        k.text("Neutrons: 0", { size: 16 }),
-        k.color(0, 0, 0),
+        k.text("Thermal Neutrons: 0", { size: 16 }),
+        k.color(BUTTON_COLOR),
         k.anchor("center"),
         k.z(TEXT_Z),
         { neutronCount: 0 }
@@ -408,15 +416,37 @@ k.scene("main", () => {
 
     const healthCounter = k.add([
         k.pos(window.screen.width / 8, 20),
-        k.text("HP: 20", { size: 16 }),
+        k.text("HP: 0", { size: 16 }),
         k.color(0, 0, 0),
         k.anchor("center"),
         k.z(TEXT_Z),
         { hp: 0 }
     ]);
 
+    const timeCounter = k.add([
+        k.pos(window.screen.width / 1.5, 20),
+        k.text("Time Remaining: 0 seconds", { size: 16 }),
+        k.color(0, 0, 0),
+        k.anchor("center"),
+        k.z(TEXT_Z),
+        { time: 0 }
+    ]);
+
     neutronCounter.onUpdate(() => {
-        neutronCounter.text = `Neutrons: ${k.get("neutron").length + k.get("fastNeutron").length}`
+        let present = Date.now();
+        let delta = (present - lastUpdate) / 1000;
+        lastUpdate = present;
+
+        let n_neutrons = k.get("neutron").length;
+        neutronCounter.text = `Thermal Neutrons: ${n_neutrons}`;
+        if (n_neutrons <= NEUTRON_TARGET + NEUTRON_DELTA && n_neutrons >= NEUTRON_TARGET - NEUTRON_DELTA) {
+            neutronCounter.color = new k.Color(133, 153, 0);
+            timer += delta;
+        }
+        else {
+            neutronCounter.color = new k.Color(220, 50, 47);
+            timer = 0;
+        };
     });
 
     xenonCounter.onUpdate(() => {
@@ -424,7 +454,15 @@ k.scene("main", () => {
     });
 
     healthCounter.onUpdate(() => {
-        healthCounter.text = `HP: ${k.get("player")[0].health}/20`
+        healthCounter.text = `HP: ${k.get("player")[0].health}/${PLAYER_HP}`
+    });
+
+    timeCounter.onUpdate(() => {
+        remaining_time = TARGET_TIMER_SECS - timer;
+        timeCounter.text = `Time Remaining: ${Math.floor(remaining_time)} seconds`;
+        if (remaining_time <= 0) {
+            k.go("end", 'Congratulations! Your operating is commendable.');
+        }
     });
 
     function move_player() {
@@ -463,10 +501,6 @@ k.scene("main", () => {
             player.currentAnim = newAnim;
         }
     }
-
-    k.onUpdate(() => {
-        move_player();
-    })
 
     k.onUpdate("neutron", (neutron) => {
         let x = Math.min(Math.max(Math.floor((neutron.pos.x - (BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX)) / URANIUM_SPACING_IN_PX), 0), MAP_SIZE_IN_COLS - 1);
@@ -507,12 +541,14 @@ k.scene("main", () => {
     k.onCollide("neutron", "player", (neutron, player) => {
         player.health -= 1;
         neutron.destroy;
+        k.shake();
     });
 
     k.onCollide("fastNeutron", "player", (fastNeutron, player) => {
         if (Math.random() < 0.05) {
-            player.health -= 5;
+            player.health -= 10;
             fastNeutron.destroy;
+            k.shake();
         }
     });
 
@@ -669,6 +705,8 @@ k.scene("main", () => {
     });
 
     k.onUpdate(() => {
+        move_player();
+
         const touchingRod = k.get("controlRod").some(rod => player.isColliding(rod));
         const touchingUpButton = k.get("raiseButton").some(button => player.isColliding(button));
         const touchingScramButton = k.get("scramButton").some(button => player.isColliding(button));
@@ -695,7 +733,74 @@ k.scene("main", () => {
             });
             scram = false;
         }
+
+        if (player.health <= 0) {
+            k.go("end", 'You died of radiation poisoning.');
+            k.burp();
+            k.addKaboom(player.pos);
+        }
+
+
     });
 });
 
-k.go("main");
+scene("end", (message) => {
+    add([
+        k.text(message),
+        k.pos(WINDOW_WIDTH_IN_PX / 2, MAP_HEIGHT_IN_PX / 2),
+        k.scale(2),
+        k.anchor("center"),
+        k.color(CONTROL_ROD_COLOR)
+    ]);
+
+    add([
+        k.text('Click anywhere or press Space to play again.'),
+        k.pos(WINDOW_WIDTH_IN_PX / 2, MAP_HEIGHT_IN_PX / 2 + 3*URANIUM_SPACING_IN_PX),
+        k.scale(1.5),
+        k.anchor("center"),
+        k.color(CONTROL_ROD_COLOR)
+    ]);
+
+    k.onKeyPress("space", () => go("main"));
+    k.onClick(() => go("main"));
+});
+
+scene("start", () => {
+    add([
+        k.text('SCRAM!'),
+        k.pos(WINDOW_WIDTH_IN_PX / 2, MAP_HEIGHT_IN_PX / 2),
+        k.scale(3),
+        k.anchor("center"),
+        k.color(CONTROL_ROD_COLOR)
+    ]);
+
+    add([
+        k.text(`Maintain ${NEUTRON_TARGET} +/- ${NEUTRON_DELTA} thermal neutrons for ${TARGET_TIMER_SECS} seconds to win.`),
+        k.pos(WINDOW_WIDTH_IN_PX / 2, MAP_HEIGHT_IN_PX / 2 + 2*URANIUM_SPACING_IN_PX),
+        k.scale(1.0),
+        k.anchor("center"),
+        k.color(CONTROL_ROD_COLOR)
+    ]);
+
+    add([
+        k.text('Don\'t melt down!'),
+        k.pos(WINDOW_WIDTH_IN_PX / 2, MAP_HEIGHT_IN_PX / 2 + 3*URANIUM_SPACING_IN_PX),
+        k.scale(1.0),
+        k.anchor("center"),
+        k.color(CONTROL_ROD_COLOR)
+    ]);
+
+    add([
+        k.text('Click anywhere or press Space to begin.'),
+        k.pos(WINDOW_WIDTH_IN_PX / 2, MAP_HEIGHT_IN_PX / 2 + 5*URANIUM_SPACING_IN_PX),
+        k.scale(1.0),
+        k.anchor("center"),
+        k.color(CONTROL_ROD_COLOR)
+    ]);
+
+    // go back to game with space is pressed
+    k.onKeyPress("space", () => go("main"));
+    k.onClick(() => go("main"));
+});
+
+k.go("start");
