@@ -396,8 +396,9 @@ k.scene("main", () => {
 
     // TODO: Record a history of the count to render to a line chart?
     const neutronCounter = k.add([
-        k.pos(window.screen.width / 2, 20),
-        k.text("Thermal Neutrons: 0", { size: 16 }),
+        k.pos(BOUNDS_OFFSET_IN_PX + 0.5*MAP_WIDTH_IN_PX, BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX/2 - 2*MAP_WALL_WIDTH_IN_PX),
+        k.text("Thermal Neutrons: 0"),
+        k.scale(0.5),
         k.color(BUTTON_COLOR),
         k.anchor("center"),
         k.z(TEXT_Z),
@@ -405,8 +406,9 @@ k.scene("main", () => {
     ]);
 
     const xenonCounter = k.add([
-        k.pos(window.screen.width / 4, 20),
-        k.text("Xenon: 0", { size: 16 }),
+        k.pos(BOUNDS_OFFSET_IN_PX + 0.25*MAP_WIDTH_IN_PX, BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX/2 - 2*MAP_WALL_WIDTH_IN_PX),
+        k.text("Xenon: 0"),
+        k.scale(0.5),
         k.color(0, 0, 0),
         k.anchor("center"),
         k.z(TEXT_Z),
@@ -414,17 +416,19 @@ k.scene("main", () => {
     ]);
 
     const healthCounter = k.add([
-        k.pos(window.screen.width / 8, 20),
-        k.text("HP: 0", { size: 16 }),
+        k.pos(BOUNDS_OFFSET_IN_PX, BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX/2 - 2*MAP_WALL_WIDTH_IN_PX),
+        k.text("HP: 0"),
+        k.scale(0.5),
         k.color(0, 0, 0),
-        k.anchor("center"),
+        k.anchor("left"),
         k.z(TEXT_Z),
         { hp: 0 }
     ]);
 
     const timeCounter = k.add([
-        k.pos(window.screen.width / 1.5, 20),
-        k.text("Time Remaining: 0 seconds", { size: 16 }),
+        k.pos(BOUNDS_OFFSET_IN_PX + 0.75*MAP_WIDTH_IN_PX, BOUNDS_OFFSET_IN_PX - URANIUM_SPACING_IN_PX/2 - 2*MAP_WALL_WIDTH_IN_PX),
+        k.text("Time Remaining: 0 seconds"),
+        k.scale(0.5),
         k.color(0, 0, 0),
         k.anchor("center"),
         k.z(TEXT_Z),
