@@ -917,7 +917,7 @@ scene("fission", () => {
         k.pos(textX, y),
         k.anchor("left"),
         k.scale(0.5),
-        k.color(BACKGROUND_COLOR),
+        k.color(CONTROL_ROD_COLOR),
         k.z(TEXT_Z),
     ]);
     y += lineH + 6;
