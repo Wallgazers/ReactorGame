@@ -24,7 +24,7 @@ const MAP_WALL_WIDTH_IN_PX = Math.floor(0.02 * MIN_DIMENSION);
 const NEUTRON_RADIUS_IN_PX = URANIUM_RADIUS_IN_PX / 3;
 const CONTROL_ROD_WIDTH_IN_PX = URANIUM_SPACING_IN_PX / 4;
 // Neutrons shouldn't appear too close to the player
-const NEUTRON_PLAYER_CLEAR_RADIUS = 200;
+const NEUTRON_PLAYER_CLEAR_RADIUS = URANIUM_SPACING_IN_PX * 2;
 
 const PLAYER_Z = 13;
 const CONTROL_ROD_Z = 11;
@@ -573,11 +573,11 @@ k.scene("main", () => {
     });
 
     k.onCollide("fastNeutron", "player", (fastNeutron, player) => {
-        if (Math.random() < 0.05) {
-            player.health -= 10;
-            fastNeutron.destroy;
-            k.shake();
-        }
+        // if (Math.random() < 0.05) {
+        //     player.health -= 10;
+        //     fastNeutron.destroy;
+        //     k.shake();
+        // }
     });
 
     k.onCollide("neutron", "uranium", (neutron, uranium, collision) => {
@@ -774,17 +774,17 @@ scene("end", (message) => {
     add([
         k.text(message),
         k.pos(WINDOW_WIDTH_IN_PX / 2, MAP_HEIGHT_IN_PX / 2),
-        k.scale(2),
+        k.scale(1.25),
         k.anchor("center"),
-        k.color(CONTROL_ROD_COLOR)
+        k.color(CONTROL_ROD_COLOR),
     ]);
 
     add([
         k.text('Click anywhere or press Space to play again.'),
         k.pos(WINDOW_WIDTH_IN_PX / 2, MAP_HEIGHT_IN_PX / 2 + 3 * URANIUM_SPACING_IN_PX),
-        k.scale(1.5),
+        k.scale(1),
         k.anchor("center"),
-        k.color(CONTROL_ROD_COLOR)
+        k.color(CONTROL_ROD_COLOR),
     ]);
 
     k.onKeyPress("space", () => go("main"));
@@ -821,6 +821,14 @@ scene("start", () => {
         k.pos(WINDOW_WIDTH_IN_PX / 2, MAP_HEIGHT_IN_PX / 2 + 5 * URANIUM_SPACING_IN_PX),
         k.scale(1.0),
         k.anchor("center"),
+        k.color(CONTROL_ROD_COLOR)
+    ]);
+
+    add([
+        k.text('(Reactor stats are at the bottom of the screen, go FULLSCREEN if they are not visible)'),
+        k.pos(WINDOW_WIDTH_IN_PX / 2, MAP_HEIGHT_IN_PX / 2 + 6 * URANIUM_SPACING_IN_PX),
+        k.scale(0.5),
+        k.anchor("bot"),
         k.color(CONTROL_ROD_COLOR)
     ]);
 
