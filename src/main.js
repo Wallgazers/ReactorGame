@@ -92,7 +92,7 @@ function spawnNeutron({ pos, dir }) {
     k.add([
         k.pos(pos.x, pos.y),
         k.circle(NEUTRON_RADIUS_IN_PX),
-        k.area(),
+        k.area({ collisionIgnore: ["neutron", "fastNeutron"] }),
         k.color(NEUTRON_COLOR),
         k.z(NEUTRON_Z),
         k.offscreen({ destroy: true }),
@@ -105,7 +105,7 @@ function spawnFastNeutron({ pos, dir }) {
     k.add([
         k.pos(pos.x, pos.y),
         k.circle(NEUTRON_RADIUS_IN_PX),
-        k.area(),
+        k.area({ collisionIgnore: ["neutron", "fastNeutron"] }),
         k.color(FAST_NEUTRON_COLOR),
         k.outline({ width: 3, color: k.BLACK }),
         k.z(NEUTRON_Z),
@@ -377,6 +377,7 @@ k.scene("main", () => {
         { dir: k.vec2(0, 0) },
         { controlRodContactStartPos: k.vec2(0, 0) },
         { currentAnim: null },
+        { health: 20 },
         "player"
     ]);
 
@@ -405,12 +406,25 @@ k.scene("main", () => {
         { xenonCount: 0 }
     ]);
 
+    const healthCounter = k.add([
+        k.pos(window.screen.width / 8, 20),
+        k.text("HP: 20", { size: 16 }),
+        k.color(0, 0, 0),
+        k.anchor("center"),
+        k.z(TEXT_Z),
+        { hp: 0 }
+    ]);
+
     neutronCounter.onUpdate(() => {
         neutronCounter.text = `Neutrons: ${k.get("neutron").length + k.get("fastNeutron").length}`
     });
 
     xenonCounter.onUpdate(() => {
         xenonCounter.text = `Xenon: ${k.get("xenon").length}`
+    });
+
+    healthCounter.onUpdate(() => {
+        healthCounter.text = `HP: ${k.get("player")[0].health}/20`
     });
 
     function move_player() {
@@ -488,6 +502,18 @@ k.scene("main", () => {
 
     k.onCollide("neutron", "wall", (neutron) => {
         neutron.destroy();
+    });
+
+    k.onCollide("neutron", "player", (neutron, player) => {
+        player.health -= 1;
+        neutron.destroy;
+    });
+
+    k.onCollide("fastNeutron", "player", (fastNeutron, player) => {
+        if (Math.random() < 0.05) {
+            player.health -= 5;
+            fastNeutron.destroy;
+        }
     });
 
     k.onCollide("neutron", "uranium", (neutron, uranium, collision) => {
